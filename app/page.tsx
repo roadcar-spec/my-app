@@ -1,26 +1,48 @@
-import { createClient } from '@/app/utils/supabase/server'
+import Link from "next/link";
 
-export default async function Home() {
-  // Supabaseクライアントを呼び出す
-  const supabase = await createClient()
-
-  // 「customers」テーブルからデータを全件取得する
-  const { data: customers, error } = await supabase
-    .from('customers')
-    .select('*')
-
+export default function Home() {
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>顧客管理システム！！</h1>
-      
-      <h2>顧客一覧</h2>
-      {error && <p style={{ color: 'red' }}>エラーが発生しました: {error.message}</p>}
-      
-      <ul>
-        {customers?.map((customer) => (
-          <li key={customer.id}>{customer.name}</li>
-        ))}
-      </ul>
-    </div>
-  )
+    <main className="min-h-screen bg-gray-100">
+      {/* ヘッダー */}
+      <header className="bg-blue-700 text-white p-5 shadow">
+        <h1 className="text-2xl font-bold">Yasaka Management</h1>
+        <p className="text-sm opacity-90">
+          経営管理システム
+        </p>
+      </header>
+
+      {/* メニュー */}
+      <div className="max-w-md mx-auto p-5 space-y-4">
+
+        <Link href="/input">
+          <div className="bg-white rounded-xl shadow p-6 hover:bg-blue-50 cursor-pointer transition">
+            <h2 className="text-xl font-semibold">📝 入力</h2>
+            <p className="text-gray-500 mt-2">
+              日次データの入力
+            </p>
+          </div>
+        </Link>
+
+        <Link href="/dashboard">
+          <div className="bg-white rounded-xl shadow p-6 hover:bg-blue-50 cursor-pointer transition">
+            <h2 className="text-xl font-semibold">📊 ダッシュボード</h2>
+            <p className="text-gray-500 mt-2">
+              入力データの確認
+            </p>
+          </div>
+        </Link>
+        <Link href="/daily">
+          <div className="bg-white rounded-xl shadow p-6 hover:bg-blue-50 cursor-pointer">
+            <h2 className="text-xl font-semibold">
+              📅 日別推移
+            </h2>
+
+            <p className="text-gray-500 mt-2">
+              毎日の動きを確認
+            </p>
+          </div>
+        </Link>
+      </div>
+    </main>
+  );
 }
