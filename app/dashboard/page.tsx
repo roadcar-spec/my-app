@@ -25,11 +25,6 @@ export default async function DashboardPage({
 
       <header className="dashboard-header">
 
-        <h1>
-          ボルボ管理
-        </h1>
-
-
         <div className="dashboard-actions">
 
           <Link
