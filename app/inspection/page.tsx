@@ -339,7 +339,7 @@ export default async function InspectionPage() {
 
                     {row.done}台
 
-
+                    {/*
                     {
                       row.isCarryOver &&
                       (
@@ -349,7 +349,7 @@ export default async function InspectionPage() {
                         </small>
                       )
                     }
-
+                   */}
                   </span>
 
 
