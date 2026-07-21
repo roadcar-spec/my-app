@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { getBusinessDaysInRange } from "@/lib/businessDay";
 
 type Store = {
   id: string;
@@ -89,8 +90,7 @@ export async function getDashboardData(
   const { data: stores } =
     await supabase
       .from("master_store")
-      .select("*")
-      .order("code");
+      .select("*");
 
 
 
@@ -164,8 +164,46 @@ export async function getDashboardData(
 
 
 
+  const businessDaysInMonth =
+    getBusinessDaysInRange(
+      monthStart,
+      date
+    );
+
+
+
   const submitStores =
     storeList.map(store=>{
+
+      const submittedDates =
+        new Set(
+          dailyList
+            .filter(
+              d =>
+                d.store_id === store.id &&
+                d.status === "提出"
+            )
+            .map(d => d.report_date)
+        );
+
+
+      const requiredDays =
+        businessDaysInMonth.length;
+
+
+      const submittedDays =
+        businessDaysInMonth.filter(
+          d => submittedDates.has(d)
+        ).length;
+
+
+      const rate =
+        requiredDays
+          ? Math.round(
+              (submittedDays / requiredDays) * 100
+            )
+          : 0;
+
 
       const today =
         dailyList.find(
@@ -182,6 +220,12 @@ export async function getDashboardData(
         submitted:
           today?.status === "提出",
 
+        rate,
+
+        requiredDays,
+
+        submittedDays,
+
       };
 
     });
@@ -189,14 +233,8 @@ export async function getDashboardData(
 
 
   const submitAverage =
-    Math.round(
-      submitStores.filter(
-        s=>s.submitted
-      ).length
-      /
-      submitStores.length
-      *
-      100
+    average(
+      submitStores.map(s => s.rate)
     );
 
 

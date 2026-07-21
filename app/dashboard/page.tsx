@@ -108,8 +108,14 @@ export default async function DashboardPage({
             </span>
 
 
-            <span>
-              {item.submitted ? 100 : 0}%
+            <span
+              className={
+                item.rate < data.submit.average
+                ? "warning"
+                : ""
+              }
+            >
+              {item.rate}%
             </span>
 
 
@@ -233,7 +239,7 @@ export default async function DashboardPage({
 
 
 
-        {data.inspection.stores.map(item => (
+{data.inspection.stores.map(item => (
 
           <div
             className="grid grid-4 row"
@@ -244,42 +250,35 @@ export default async function DashboardPage({
               {item.store.name}
             </span>
 
-
             <span
               className={
-                item.month1 <
-                data.inspection.month1Average
-                ? "warning"
-                : ""
+                item.month1 < data.inspection.month1Average
+                  ? "warning"
+                  : ""
               }
             >
               {item.month1}%
             </span>
 
-
             <span
               className={
-                item.month2 <
-                data.inspection.month2Average
-                ? "warning"
-                : ""
+                item.month2 < data.inspection.month2Average
+                  ? "warning"
+                  : ""
               }
             >
               {item.month2}%
             </span>
 
-
             <span
               className={
-                item.month3 <
-                data.inspection.month3Average
-                ? "warning"
-                : ""
+                item.month3 < data.inspection.month3Average
+                  ? "warning"
+                  : ""
               }
             >
               {item.month3}%
             </span>
-
 
           </div>
 
