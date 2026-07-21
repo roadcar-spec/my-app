@@ -2,6 +2,8 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import "./inspection.css";
 
+export const dynamic = "force-dynamic";
+
 const displayOrder = [
   "大阪中央",
   "千里",
