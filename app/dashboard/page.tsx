@@ -1,92 +1,297 @@
-export default function DashboardPage() {
-  const data = {
-    report_date: "2026-07-07",
+import Link from "next/link";
+import { getDashboardData } from "./getDashboardData";
+import "./dashboard.css";
 
-    sr_visitors: 9,
-    new_visitors: 0,
-    negotiations: 8,
-    test_drive: 2,
-    quotation: 6,
-    new_order: 3,
-    used_order: 2,
 
-    service_total: 48,
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    date?: string;
+  }>;
+}) {
 
-    gross_profit: 2842605,
-    labor_sales: 1574863,
+  const params = await searchParams;
 
-    insurance: 0,
-    finance: 0,
-    tradein: 0,
-  };
-
-  const Card = ({
-    title,
-    children,
-  }: {
-    title: string;
-    children: React.ReactNode;
-  }) => (
-    <div className="bg-white rounded-xl shadow p-4">
-      <h2 className="text-lg font-bold mb-4">{title}</h2>
-      {children}
-    </div>
+  const data = await getDashboardData(
+    params.date
   );
 
-  const Row = ({
-    label,
-    value,
-  }: {
-    label: string;
-    value: number | string;
-  }) => (
-    <div className="flex justify-between py-2 border-b">
-      <span>{label}</span>
-      <span className="font-semibold">{value}</span>
-    </div>
-  );
 
   return (
-    <main className="min-h-screen bg-gray-100">
-      <header className="bg-blue-700 text-white p-4 shadow">
-        <h1 className="text-xl font-bold">ダッシュボード</h1>
-        <p>{data.report_date}</p>
+
+    <main className="dashboard">
+
+
+      <header className="dashboard-header">
+
+        <h1>
+          ボルボ管理
+        </h1>
+
+
+        <div className="dashboard-actions">
+
+          <Link
+            href="/dashboard/input"
+            className="dashboard-input-button"
+          >
+            管理入力
+          </Link>
+
+        </div>        
+        <form>
+
+          <label>
+            表示日
+          </label>
+
+          <input
+            type="date"
+            name="date"
+            defaultValue={data.viewDate}
+          />
+
+          <button>
+            表示
+          </button>
+
+        </form>
+
       </header>
 
-      <div className="max-w-xl mx-auto p-4 space-y-4">
 
-        <Card title="営業">
-          <Row label="SR来場" value={data.sr_visitors} />
-          <Row label="新規来場" value={data.new_visitors} />
-          <Row label="商談" value={data.negotiations} />
-          <Row label="試乗" value={data.test_drive} />
-          <Row label="見積" value={data.quotation} />
-          <Row label="新車受注" value={data.new_order} />
-          <Row label="中古受注" value={data.used_order} />
-        </Card>
 
-        <Card title="サービス">
-          <Row label="総入庫" value={data.service_total} />
-        </Card>
 
-        <Card title="売上">
-          <Row
-            label="総粗利"
-            value={`¥${data.gross_profit.toLocaleString()}`}
-          />
-          <Row
-            label="工賃売上"
-            value={`¥${data.labor_sales.toLocaleString()}`}
-          />
-        </Card>
+      <section className="dashboard-section">
 
-        <Card title="その他">
-          <Row label="保険" value={data.insurance} />
-          <Row label="ローン" value={data.finance} />
-          <Row label="下取" value={data.tradein} />
-        </Card>
+        <h2>
+          提出状況
+        </h2>
 
-      </div>
+
+        <div className="average">
+          平均提出率：
+          {data.submit.average}%
+        </div>
+
+
+        <div className="grid grid-3 header">
+
+          <span>店舗</span>
+          <span>今日</span>
+          <span>提出率</span>
+
+        </div>
+
+
+        {data.submit.stores.map(item => (
+
+          <div
+            className="grid grid-3 row"
+            key={item.store.id}
+          >
+
+            <span>
+              {item.store.name}
+            </span>
+
+
+            <span
+              className={
+                item.submitted
+                ? ""
+                : "warning"
+              }
+            >
+              {item.submitted ? "提出" : "未提出"}
+            </span>
+
+
+            <span>
+              {item.submitted ? 100 : 0}%
+            </span>
+
+
+          </div>
+
+        ))}
+
+
+      </section>
+
+
+
+
+
+
+      <section className="dashboard-section">
+
+        <h2>
+          サービス粗利
+        </h2>
+
+
+        <div className="average">
+          平均達成率：
+          {data.gross.average}%
+        </div>
+
+
+
+        <div className="grid grid-3 header">
+
+          <span>店舗</span>
+          <span>実績</span>
+          <span>達成率</span>
+
+        </div>
+
+
+
+        {data.gross.stores.map(item => (
+
+          <div
+            className="grid grid-3 row"
+            key={item.store.id}
+          >
+
+            <span>
+              {item.store.name}
+            </span>
+
+
+            <span>
+              {item.amount.toLocaleString()}千円
+            </span>
+
+
+            <span
+              className={
+                item.rate < data.gross.average
+                ? "warning"
+                : ""
+              }
+            >
+
+              {item.rate}%
+
+            </span>
+
+
+          </div>
+
+        ))}
+
+
+      </section>
+
+
+
+
+
+
+      <section className="dashboard-section">
+
+        <h2>
+          車検進捗
+        </h2>
+        <div className="section-link">
+          <Link href="/inspection">
+            車検詳細を見る →
+          </Link>
+        </div>
+
+        <div className="average">
+
+          平均　
+          7月：
+          {data.inspection.month1Average}%
+
+         　
+          8月：
+          {data.inspection.month2Average}%
+
+         　
+          9月：
+          {data.inspection.month3Average}%
+
+        </div>
+
+
+
+
+        <div className="grid grid-4 header">
+
+          <span>店舗</span>
+          <span>7月</span>
+          <span>8月</span>
+          <span>9月</span>
+
+        </div>
+
+
+
+
+        {data.inspection.stores.map(item => (
+
+          <div
+            className="grid grid-4 row"
+            key={item.store.id}
+          >
+
+            <span>
+              {item.store.name}
+            </span>
+
+
+            <span
+              className={
+                item.month1 <
+                data.inspection.month1Average
+                ? "warning"
+                : ""
+              }
+            >
+              {item.month1}%
+            </span>
+
+
+            <span
+              className={
+                item.month2 <
+                data.inspection.month2Average
+                ? "warning"
+                : ""
+              }
+            >
+              {item.month2}%
+            </span>
+
+
+            <span
+              className={
+                item.month3 <
+                data.inspection.month3Average
+                ? "warning"
+                : ""
+              }
+            >
+              {item.month3}%
+            </span>
+
+
+          </div>
+
+        ))}
+
+
+      </section>
+
+
+
     </main>
+
   );
+
 }

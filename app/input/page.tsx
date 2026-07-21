@@ -1,128 +1,234 @@
 "use client";
 
-import { useState } from "react";
-import NumberInput from "@/components/NumberInput";
-import SalesForm from "@/components/SalesForm";
+import { useEffect, useState } from "react";
+import SalesSection from "@/components/input/SalesSection";
+
+type Store = {
+  id: string;
+  code: string;
+  name: string;
+};
+
+const emptySales = {
+  srVisitors: 0,
+  newVisitors: 0,
+  negotiations: 0,
+  testDrive: 0,
+  quotation: 0,
+  newOrder: 0,
+  usedOrder: 0,
+  newRegistration: 0,
+  usedRegistration: 0,
+};
 
 export default function InputPage() {
-  const [form, setForm] = useState({
-    report_date: new Date().toISOString().split("T")[0],
-    store_id: "",
+  const [stores, setStores] = useState<Store[]>([]);
+  const [message, setMessage] = useState("");
 
-    sr_visitors: 0,
-    new_visitors: 0,
-    negotiations: 0,
-    test_drive: 0,
-    quotation: 0,
-    new_order: 0,
-    used_order: 0,
-    new_registration: 0,
-    used_registration: 0,
+  const [reportDate, setReportDate] = useState(
+    new Date().toISOString().substring(0, 10)
+  );
 
-    service_total: 0,
-    gross_profit: 0,
-    labor_sales: 0,
+  const [storeId, setStoreId] = useState("");
 
-    insurance: 0,
-    finance: 0,
-    tradein: 0,
-  });
+  const [sales, setSales] = useState(emptySales);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    setForm({
-      ...form,
-      [e.target.name]:
-        e.target.type === "number"
-          ? Number(e.target.value)
-          : e.target.value,
+  useEffect(() => {
+    loadStores();
+  }, []);
+
+  useEffect(() => {
+    if (storeId) {
+      loadDailySales();
+    }
+  }, [reportDate, storeId]);
+
+  async function loadStores() {
+    const res = await fetch("/api/master-store");
+    const result = await res.json();
+
+    if (result.success) {
+      setStores(result.data);
+
+      if (result.data.length > 0) {
+        setStoreId(result.data[0].id);
+      }
+    }
+  }
+
+  async function loadDailySales() {
+    const res = await fetch(
+      `/api/daily-sales?report_date=${reportDate}&store_id=${storeId}`
+    );
+
+    const result = await res.json();
+
+    if (!result.success) {
+      setSales(emptySales);
+      return;
+    }
+
+    if (!result.data) {
+      setSales(emptySales);
+      return;
+    }
+
+    setSales({
+      srVisitors: result.data.sr_visitors ?? 0,
+      newVisitors: result.data.new_visitors ?? 0,
+      negotiations: result.data.negotiations ?? 0,
+      testDrive: result.data.test_drive ?? 0,
+      quotation: result.data.quotation ?? 0,
+      newOrder: result.data.new_order ?? 0,
+      usedOrder: result.data.used_order ?? 0,
+      newRegistration: result.data.new_registration ?? 0,
+      usedRegistration: result.data.used_registration ?? 0,
     });
-  };
+  }
+
+  async function save() {
+    const payload = {
+      report_date: reportDate,
+      store_id: storeId,
+
+      sr_visitors: sales.srVisitors,
+      new_visitors: sales.newVisitors,
+      negotiations: sales.negotiations,
+      test_drive: sales.testDrive,
+      quotation: sales.quotation,
+      new_order: sales.newOrder,
+      used_order: sales.usedOrder,
+      new_registration: sales.newRegistration,
+      used_registration: sales.usedRegistration,
+    };
+
+    const res = await fetch("/api/daily-sales", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      setMessage("✅ 保存しました");
+    } else {
+      setMessage(result.message);
+    }
+  }
 
   return (
-    <main className="min-h-screen bg-gray-100">
-      <header className="bg-blue-700 text-white p-4 shadow">
-        <h1 className="text-xl font-bold">日次入力</h1>
-      </header>
+    <main className="min-h-screen bg-gray-100 p-6">
+      <div className="mx-auto max-w-5xl space-y-6">
 
-      <div className="max-w-xl mx-auto p-4 space-y-5">
+        <h1 className="text-3xl font-bold">
+          日報入力
+        </h1>
 
-        {/* 基本情報 */}
-        <section className="bg-white rounded-xl shadow p-4">
-          <h2 className="font-bold mb-4">基本情報</h2>
+        <div className="rounded-lg bg-white p-6 shadow">
 
-          <div className="mb-4">
-            <label className="block mb-1">日付</label>
+          <div className="grid gap-6 md:grid-cols-2">
 
-            <input
-              type="date"
-              name="report_date"
-              value={form.report_date}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-2"
-            />
+            <div>
+              <label className="mb-2 block font-semibold">
+                日付
+              </label>
+
+              <input
+                type="date"
+                value={reportDate}
+                onChange={(e) => setReportDate(e.target.value)}
+                className="w-full rounded-lg border p-3"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block font-semibold">
+                店舗
+              </label>
+
+              <select
+                value={storeId}
+                onChange={(e) => setStoreId(e.target.value)}
+                className="w-full rounded-lg border p-3"
+              >
+                {stores.map((store) => (
+                  <option
+                    key={store.id}
+                    value={store.id}
+                  >
+                    {store.name}
+                  </option>
+                ))}
+              </select>
+
+            </div>
+
           </div>
 
-          <div>
-            <label className="block mb-1">店舗</label>
+        </div>        
+        <SalesSection
+          srVisitors={sales.srVisitors}
+          setSrVisitors={(v) =>
+            setSales((prev) => ({ ...prev, srVisitors: v }))
+          }
 
-            <select
-              name="store_id"
-              value={form.store_id}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-2"
-            >
-              <option value="">選択してください</option>
-              <option value="WKY">和歌山</option>
-            </select>
-          </div>
-        </section>
+          newVisitors={sales.newVisitors}
+          setNewVisitors={(v) =>
+            setSales((prev) => ({ ...prev, newVisitors: v }))
+          }
 
-        {/* 営業 */}
-        <section className="bg-white rounded-xl shadow p-4">
-          <h2 className="font-bold text-lg mb-3">営業</h2>
+          negotiations={sales.negotiations}
+          setNegotiations={(v) =>
+            setSales((prev) => ({ ...prev, negotiations: v }))
+          }
 
-          <NumberInput label="SR来場" name="sr_visitors" form={form} onChange={handleChange} />
-          <NumberInput label="新規来場" name="new_visitors" form={form} onChange={handleChange} />
-          <NumberInput label="商談" name="negotiations" form={form} onChange={handleChange} />
-          <NumberInput label="試乗" name="test_drive" form={form} onChange={handleChange} />
-          <NumberInput label="見積" name="quotation" form={form} onChange={handleChange} />
-          <NumberInput label="新車受注" name="new_order" form={form} onChange={handleChange} />
-          <NumberInput label="中古受注" name="used_order" form={form} onChange={handleChange} />
-          <NumberInput label="新車登録" name="new_registration" form={form} onChange={handleChange} />
-          <NumberInput label="中古登録" name="used_registration" form={form} onChange={handleChange} />
-        </section>
+          testDrive={sales.testDrive}
+          setTestDrive={(v) =>
+            setSales((prev) => ({ ...prev, testDrive: v }))
+          }
 
-        {/* サービス */}
-        <section className="bg-white rounded-xl shadow p-4">
-          <h2 className="font-bold text-lg mb-3">サービス</h2>
+          quotation={sales.quotation}
+          setQuotation={(v) =>
+            setSales((prev) => ({ ...prev, quotation: v }))
+          }
 
-          <NumberInput label="総入庫" name="service_total" form={form} onChange={handleChange} />
-        </section>
+          newOrder={sales.newOrder}
+          setNewOrder={(v) =>
+            setSales((prev) => ({ ...prev, newOrder: v }))
+          }
 
-        {/* 売上 */}
-        <section className="bg-white rounded-xl shadow p-4">
-          <h2 className="font-bold text-lg mb-3">売上</h2>
+          usedOrder={sales.usedOrder}
+          setUsedOrder={(v) =>
+            setSales((prev) => ({ ...prev, usedOrder: v }))
+          }
 
-          <NumberInput label="総粗利" name="gross_profit" form={form} onChange={handleChange} />
-          <NumberInput label="工賃売上" name="labor_sales" form={form} onChange={handleChange} />
-        </section>
+          newRegistration={sales.newRegistration}
+          setNewRegistration={(v) =>
+            setSales((prev) => ({ ...prev, newRegistration: v }))
+          }
 
-        {/* その他 */}
-        <section className="bg-white rounded-xl shadow p-4">
-          <h2 className="font-bold text-lg mb-3">その他</h2>
-
-          <NumberInput label="保険件数" name="insurance" form={form} onChange={handleChange} />
-          <NumberInput label="ローン件数" name="finance" form={form} onChange={handleChange} />
-          <NumberInput label="下取件数" name="tradein" form={form} onChange={handleChange} />
-        </section>
+          usedRegistration={sales.usedRegistration}
+          setUsedRegistration={(v) =>
+            setSales((prev) => ({ ...prev, usedRegistration: v }))
+          }
+        />
 
         <button
-          className="w-full bg-blue-700 text-white rounded-xl py-4 text-lg font-bold"
+          type="button"
+          onClick={save}
+          className="w-full rounded-lg bg-blue-600 py-4 text-lg font-bold text-white hover:bg-blue-700"
         >
           保存
         </button>
+        {message && (
+          <div className="rounded-lg bg-green-100 border border-green-300 p-4 text-green-800 font-semibold">
+            {message}
+          </div>
+        )}
+
 
       </div>
     </main>
