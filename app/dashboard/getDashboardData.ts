@@ -59,7 +59,7 @@ function average(
     return 0;
   }
 
-  return Math.round(
+  return (
     values.reduce(
       (a,b)=>a+b,
       0
@@ -199,9 +199,7 @@ export async function getDashboardData(
 
       const rate =
         requiredDays
-          ? Math.round(
-              (submittedDays / requiredDays) * 100
-            )
+          ?  (submittedDays / requiredDays) * 100
           : 0;
 
 
@@ -269,11 +267,9 @@ export async function getDashboardData(
 
         rate:
           target?.service_target
-            ? Math.round(
-                amount /
+            ? amount /
                 target.service_target *
                 100
-              )
             : 0,
 
 
@@ -314,37 +310,37 @@ export async function getDashboardData(
 
         month1:
           target?.inspection_target_1
-            ? Math.round(
+            ? 
                 (latest?.inspection_done_1 ?? 0)
                 /
                 target.inspection_target_1
                 *
                 100
-              )
+              
             : 0,
 
 
         month2:
           target?.inspection_target_2
-            ? Math.round(
+            ? 
                 (latest?.inspection_done_2 ?? 0)
                 /
                 target.inspection_target_2
                 *
                 100
-              )
+              
             : 0,
 
 
         month3:
           target?.inspection_target_3
-            ? Math.round(
+            ? 
                 (latest?.inspection_done_3 ?? 0)
                 /
                 target.inspection_target_3
                 *
                 100
-              )
+              
             : 0,
 
 

@@ -67,7 +67,7 @@ export default async function DashboardPage({
 
         <div className="average">
           平均提出率：
-          {data.submit.average}%
+          {data.submit.average.toFixed(1)}%
         </div>
 
 
@@ -110,7 +110,7 @@ export default async function DashboardPage({
                 : ""
               }
             >
-              {item.rate}%
+              {item.rate.toFixed(1)}%
             </span>
 
 
@@ -135,7 +135,7 @@ export default async function DashboardPage({
 
         <div className="average">
           平均達成率：
-          {data.gross.average}%
+          {data.gross.average.toFixed(1)}%
         </div>
 
 
@@ -175,7 +175,7 @@ export default async function DashboardPage({
               }
             >
 
-              {item.rate}%
+              {item.rate.toFixed(1)}%
 
             </span>
 
@@ -207,15 +207,15 @@ export default async function DashboardPage({
 
           平均　
           7月：
-          {data.inspection.month1Average}%
+          {data.inspection.month1Average.toFixed(1)}%
 
          　
           8月：
-          {data.inspection.month2Average}%
+          {data.inspection.month2Average.toFixed(1)}%
 
          　
           9月：
-          {data.inspection.month3Average}%
+          {data.inspection.month3Average.toFixed(1)}%
 
         </div>
 
@@ -252,7 +252,7 @@ export default async function DashboardPage({
                   : ""
               }
             >
-              {item.month1}%
+              {item.month1.toFixed(1)}%
             </span>
 
             <span
@@ -262,7 +262,7 @@ export default async function DashboardPage({
                   : ""
               }
             >
-              {item.month2}%
+              {item.month2.toFixed(1)}%
             </span>
 
             <span
@@ -272,7 +272,7 @@ export default async function DashboardPage({
                   : ""
               }
             >
-              {item.month3}%
+              {item.month3.toFixed(1)}%
             </span>
 
           </div>
