@@ -3,20 +3,19 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { saveManagementTarget } from "@/lib/saveManagementTarget";
+import { sortStoresByDisplayOrder } from "@/lib/storeDisplayOrder";
 
-const stores = [
-  { id: "700f919d-94c6-4656-bbf4-e12f9a54b1ca", name: "千里" },
-  { id: "18459614-0f56-47c9-84ba-393c567c2097", name: "大阪中央" },
-  { id: "570713d0-88f5-4508-a2f7-ca023daabddf", name: "堺" },
-  { id: "2f9e38a0-01af-4d4d-b13b-1a5acbcff84a", name: "東大阪" },
-  { id: "1fce3986-917a-4c20-b7ac-a5909c3bb1c8", name: "岸和田" },
-  { id: "74346808-9954-4d09-a52b-d11eceba6a76", name: "板橋" },
-];
+type Store = {
+  id: string;
+  name: string;
+};
 
 export default function TargetPage() {
+  const [stores, setStores] = useState<Store[]>([]);
+
   const [form, setForm] = useState({
     yearMonth: "2026-07-01",
-    storeId: stores[0].id,
+    storeId: "",
     serviceTarget: "",
     inspectionTarget1: "",
     inspectionTarget2: "",
@@ -25,8 +24,27 @@ export default function TargetPage() {
 
   const [loading, setLoading] = useState(false);
 
+  // 店舗一覧を読み込み、初期選択店舗を設定する
+  useEffect(() => {
+    const loadStores = async () => {
+      const { data } = await supabase.from("master_store").select("*");
+
+      const sorted = sortStoresByDisplayOrder(data ?? []);
+
+      setStores(sorted);
+
+      if (sorted.length > 0) {
+        setForm((prev) => ({ ...prev, storeId: sorted[0].id }));
+      }
+    };
+
+    loadStores();
+  }, []);
+
   // 月 or 拠点が変わったら既存データを読み込む
   useEffect(() => {
+    if (!form.storeId) return;
+
     const loadExisting = async () => {
       setLoading(true);
 
@@ -64,7 +82,6 @@ export default function TargetPage() {
     };
 
     loadExisting();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.yearMonth, form.storeId]);
 
   const handleChange = (

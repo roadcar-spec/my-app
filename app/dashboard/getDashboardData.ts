@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { getBusinessDaysInRange } from "@/lib/businessDay";
 import { isSubmitted } from "@/lib/managementStatus";
 import { getJstDateString, getRollingMonthLabels } from "@/lib/jstDate";
+import { sortStoresByDisplayOrder } from "@/lib/storeDisplayOrder";
 
 type Store = {
   id: string;
@@ -25,16 +26,6 @@ type Target = {
   inspection_target_2: number;
   inspection_target_3: number;
 };
-
-
-const displayOrder = [
-  "大阪中央",
-  "千里",
-  "堺",
-  "東大阪",
-  "岸和田",
-  "板橋",
-];
 
 
 function getYesterday() {
@@ -123,19 +114,9 @@ export async function getDashboardData(
 
 
   const storeList =
-    ((stores ?? []) as Store[])
-      .filter(
-        store =>
-          displayOrder.includes(
-            store.name
-          )
-      )
-      .sort(
-        (a,b)=>
-          displayOrder.indexOf(a.name)
-          -
-          displayOrder.indexOf(b.name)
-      );
+    sortStoresByDisplayOrder(
+      (stores ?? []) as Store[]
+    );
 
 
 

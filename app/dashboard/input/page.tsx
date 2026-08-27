@@ -2,41 +2,24 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import { saveManagement } from "@/lib/saveManagement";
 import { getManagementLatest } from "@/lib/getManagementLatest";
 import type { ManagementStatus } from "@/lib/managementStatus";
 import { getStatusDisplayKind } from "@/lib/managementStatus";
+import { sortStoresByDisplayOrder } from "@/lib/storeDisplayOrder";
 
-
-const stores = [
-  {
-    id: "700f919d-94c6-4656-bbf4-e12f9a54b1ca",
-    name: "千里",
-  },
-  {
-    id: "18459614-0f56-47c9-84ba-393c567c2097",
-    name: "大阪中央",
-  },
-  {
-    id: "570713d0-88f5-4508-a2f7-ca023daabddf",
-    name: "堺",
-  },
-  {
-    id: "2f9e38a0-01af-4d4d-b13b-1a5acbcff84a",
-    name: "東大阪",
-  },
-  {
-    id: "1fce3986-917a-4c20-b7ac-a5909c3bb1c8",
-    name: "岸和田",
-  },
-  {
-    id: "74346808-9954-4d09-a52b-d11eceba6a76",
-    name: "板橋",
-  },
-];
+type Store = {
+  id: string;
+  name: string;
+};
 
 
 export default function DashboardInputPage() {
+
+
+  const [stores,setStores] =
+    useState<Store[]>([]);
 
 
   const [date,setDate] =
@@ -48,9 +31,7 @@ export default function DashboardInputPage() {
 
 
   const [storeId,setStoreId] =
-    useState(
-      stores[0].id
-    );
+    useState("");
 
 
   const [form,setForm] =
@@ -86,64 +67,92 @@ export default function DashboardInputPage() {
 
   useEffect(()=>{
 
-    loadLatest();
+    async function loadStores(){
 
-  },[date,storeId]);
+      const { data } =
+        await supabase
+          .from("master_store")
+          .select("*");
+
+      const sorted =
+        sortStoresByDisplayOrder(
+          data ?? []
+        );
+
+      setStores(sorted);
+
+      if (sorted.length > 0) {
+        setStoreId(sorted[0].id);
+      }
+
+    }
+
+    loadStores();
+
+  },[]);
 
 
 
 
-  async function loadLatest(){
+  useEffect(()=>{
+
+    if (!storeId) return;
+
+    async function loadLatest(){
 
 
-    const data =
-      await getManagementLatest(
-        storeId,
-        date
+      const data =
+        await getManagementLatest(
+          storeId,
+          date
+        );
+
+
+      setStatus(
+        data.todayStatus
       );
 
 
-    setStatus(
-      data.todayStatus
-    );
+      setLatestDate(
+        data.latestDate
+      );
 
 
-    setLatestDate(
-      data.latestDate
-    );
+      setIsCarryOver(
+        data.isCarryOver
+      );
 
 
-    setIsCarryOver(
-      data.isCarryOver
-    );
+      setForm({
+
+        serviceGross:
+          String(
+            data.service_gross
+          ),
+
+        m1Done:
+          String(
+            data.inspection_done_1
+          ),
+
+        m2Done:
+          String(
+            data.inspection_done_2
+          ),
+
+        m3Done:
+          String(
+            data.inspection_done_3
+          ),
+
+      });
 
 
-    setForm({
+    }
 
-      serviceGross:
-        String(
-          data.service_gross
-        ),
+    loadLatest();
 
-      m1Done:
-        String(
-          data.inspection_done_1
-        ),
-
-      m2Done:
-        String(
-          data.inspection_done_2
-        ),
-
-      m3Done:
-        String(
-          data.inspection_done_3
-        ),
-
-    });
-
-
-  }
+  },[date,storeId]);
 
 
 

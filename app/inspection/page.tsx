@@ -2,19 +2,10 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { isSubmitted } from "@/lib/managementStatus";
 import { getJstDateString, getRollingMonthLabels } from "@/lib/jstDate";
+import { sortStoresByDisplayOrder } from "@/lib/storeDisplayOrder";
 import "./inspection.css";
 
 export const dynamic = "force-dynamic";
-
-const displayOrder = [
-  "大阪中央",
-  "千里",
-  "堺",
-  "東大阪",
-  "岸和田",
-  "板橋",
-];
-
 
 function calcRate(
   done:number,
@@ -91,19 +82,9 @@ export default async function InspectionPage() {
 
 
   const storeList =
-    (stores ?? [])
-      .filter(
-        store =>
-          displayOrder.includes(
-            store.name
-          )
-      )
-      .sort(
-        (a,b)=>
-          displayOrder.indexOf(a.name)
-          -
-          displayOrder.indexOf(b.name)
-      );
+    sortStoresByDisplayOrder(
+      stores ?? []
+    );
 
 
 
