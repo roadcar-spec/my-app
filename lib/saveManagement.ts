@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import type { ManagementStatus } from "./managementStatus";
 
 type ManagementData = {
   report_date: string;
@@ -10,7 +11,7 @@ type ManagementData = {
   inspection_done_2: number;
   inspection_done_3: number;
 
-  status: "提出" | "未提出";
+  status: ManagementStatus;
 };
 
 

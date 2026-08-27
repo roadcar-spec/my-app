@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { saveManagement } from "@/lib/saveManagement";
 import { getManagementLatest } from "@/lib/getManagementLatest";
+import type { ManagementStatus } from "@/lib/managementStatus";
+import { getStatusDisplayKind } from "@/lib/managementStatus";
 
 
 const stores = [
@@ -165,7 +167,7 @@ export default function DashboardInputPage() {
 
 
   async function save(
-    saveStatus:"提出"|"未提出"
+    saveStatus:ManagementStatus
   ){
 
 
@@ -216,8 +218,10 @@ export default function DashboardInputPage() {
 
 
     setMessage(
-      saveStatus === "提出"
-      ? "提出しました"
+      saveStatus === "当日提出"
+      ? "当日提出として登録しました"
+      : saveStatus === "翌日提出"
+      ? "翌日提出として登録しました"
       : "未提出として登録しました"
     );
 
@@ -327,9 +331,11 @@ export default function DashboardInputPage() {
 
           <div
             className={
-              isCarryOver
-              ? "bg-yellow-100 p-3 rounded-lg"
-              : "bg-gray-100 p-3 rounded-lg"
+              getStatusDisplayKind(status) === "ontime"
+              ? "bg-green-100 p-3 rounded-lg"
+              : getStatusDisplayKind(status) === "late"
+              ? "bg-amber-100 p-3 rounded-lg"
+              : "bg-red-100 p-3 rounded-lg"
             }
           >
 
@@ -449,20 +455,20 @@ export default function DashboardInputPage() {
 
 
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
 
 
           <button
 
             onClick={
-              ()=>save("未提出")
+              ()=>save("当日提出")
             }
 
-            className="bg-blue-600 text-white rounded-xl py-4 font-bold"
+            className="bg-green-600 text-white rounded-xl py-4 font-bold"
 
           >
 
-            未提出登録
+            当日提出
 
           </button>
 
@@ -471,14 +477,30 @@ export default function DashboardInputPage() {
           <button
 
             onClick={
-              ()=>save("提出")
+              ()=>save("翌日提出")
             }
 
-            className="bg-blue-600 text-white rounded-xl py-4 font-bold"
+            className="bg-amber-500 text-white rounded-xl py-4 font-bold"
 
           >
 
-            提出
+            翌日提出
+
+          </button>
+
+
+
+          <button
+
+            onClick={
+              ()=>save("未提出")
+            }
+
+            className="bg-red-600 text-white rounded-xl py-4 font-bold"
+
+          >
+
+            未提出登録
 
           </button>
 

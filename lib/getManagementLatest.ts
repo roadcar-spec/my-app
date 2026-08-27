@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { isSubmitted } from "@/lib/managementStatus";
 
 export async function getManagementLatest(
   storeId: string,
@@ -25,13 +26,13 @@ export async function getManagementLatest(
   // 当日提出済みの場合
   if (
     today &&
-    today.status === "提出"
+    isSubmitted(today.status)
   ) {
 
     return {
 
       todayStatus:
-        "提出",
+        today.status,
 
       latestDate:
         today.report_date,
@@ -70,9 +71,9 @@ export async function getManagementLatest(
         "store_id",
         storeId
       )
-      .eq(
+      .neq(
         "status",
-        "提出"
+        "未提出"
       )
       .lt(
         "report_date",

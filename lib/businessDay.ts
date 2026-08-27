@@ -14,10 +14,16 @@ const specialHolidayRanges: [string, string][] = [
   ["2026-12-29", "2027-01-03"], // 年末年始休み(仮)
 ];
 
+// dateStr は "YYYY-MM-DD" 形式のカレンダー日付そのものを表すため、
+// サーバーのローカルタイムゾーンに影響されないよう常にUTCとして解釈する。
+function toUtcDate(dateStr: string): Date {
+  return new Date(dateStr + "T00:00:00Z");
+}
+
 function isLastDayOfMonth(date: Date): boolean {
   const nextDay = new Date(date);
-  nextDay.setDate(date.getDate() + 1);
-  return nextDay.getMonth() !== date.getMonth();
+  nextDay.setUTCDate(date.getUTCDate() + 1);
+  return nextDay.getUTCMonth() !== date.getUTCMonth();
 }
 
 export function isBusinessDay(dateStr: string): boolean {
@@ -28,8 +34,8 @@ export function isBusinessDay(dateStr: string): boolean {
     }
   }
 
-  const date = new Date(dateStr + "T00:00:00");
-  const dayOfWeek = date.getDay(); // 0=日,1=月,2=火,3=水,4=木,5=金,6=土
+  const date = toUtcDate(dateStr);
+  const dayOfWeek = date.getUTCDay(); // 0=日,1=月,2=火,3=水,4=木,5=金,6=土
 
   // 火・水以外は営業日
   if (dayOfWeek !== 2 && dayOfWeek !== 3) {
@@ -55,15 +61,15 @@ export function getBusinessDaysInRange(
   endDateStr: string
 ): string[] {
   const result: string[] = [];
-  const current = new Date(startDateStr + "T00:00:00");
-  const end = new Date(endDateStr + "T00:00:00");
+  const current = toUtcDate(startDateStr);
+  const end = toUtcDate(endDateStr);
 
   while (current <= end) {
     const dateStr = current.toISOString().split("T")[0];
     if (isBusinessDay(dateStr)) {
       result.push(dateStr);
     }
-    current.setDate(current.getDate() + 1);
+    current.setUTCDate(current.getUTCDate() + 1);
   }
 
   return result;

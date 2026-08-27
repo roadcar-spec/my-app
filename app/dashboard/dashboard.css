@@ -150,6 +150,16 @@
   font-weight: 700;
 }
 
+.status-ontime {
+  color: #16a34a !important;
+  font-weight: 700;
+}
+
+.status-late {
+  color: #d97706 !important;
+  font-weight: 700;
+}
+
 @media (max-width: 768px) {
 
   .dashboard {

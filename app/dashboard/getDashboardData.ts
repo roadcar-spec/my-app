@@ -1,5 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { getBusinessDaysInRange } from "@/lib/businessDay";
+import { isSubmitted } from "@/lib/managementStatus";
+import { getJstDateString, getRollingMonthLabels } from "@/lib/jstDate";
 
 type Store = {
   id: string;
@@ -37,10 +39,14 @@ const displayOrder = [
 
 function getYesterday() {
 
-  const date = new Date();
+  const todayJst = getJstDateString();
 
-  date.setDate(
-    date.getDate() - 1
+  const date = new Date(
+    `${todayJst}T00:00:00Z`
+  );
+
+  date.setUTCDate(
+    date.getUTCDate() - 1
   );
 
   return date
@@ -150,7 +156,7 @@ export async function getDashboardData(
       .filter(
         d =>
           d.store_id === storeId &&
-          d.status === "提出" &&
+          isSubmitted(d.status) &&
           d.report_date <= date
       )
       .sort(
@@ -181,7 +187,7 @@ export async function getDashboardData(
             .filter(
               d =>
                 d.store_id === store.id &&
-                d.status === "提出"
+                isSubmitted(d.status)
             )
             .map(d => d.report_date)
         );
@@ -216,7 +222,10 @@ export async function getDashboardData(
         store,
 
         submitted:
-          today?.status === "提出",
+          isSubmitted(today?.status),
+
+        todayStatus:
+          today?.status ?? "未提出",
 
         rate,
 
@@ -414,6 +423,12 @@ export async function getDashboardData(
           inspectionStores.map(
             i=>i.month3
           )
+        ),
+
+
+      monthLabels:
+        getRollingMonthLabels(
+          monthStart
         ),
 
 

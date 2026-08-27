@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { isSubmitted } from "@/lib/managementStatus";
+import { getJstDateString, getRollingMonthLabels } from "@/lib/jstDate";
 import "./inspection.css";
 
 export const dynamic = "force-dynamic";
@@ -51,9 +53,7 @@ export default async function InspectionPage() {
 
 
   const viewDate =
-    new Date()
-      .toISOString()
-      .split("T")[0];
+    getJstDateString();
 
 
   const yearMonth =
@@ -107,19 +107,23 @@ export default async function InspectionPage() {
 
 
 
+  const monthLabels =
+    getRollingMonthLabels(yearMonth);
+
+
   const months = [
     {
-      name:"7月",
+      name:monthLabels[0],
       target:"inspection_target_1",
       done:"inspection_done_1",
     },
     {
-      name:"8月",
+      name:monthLabels[1],
       target:"inspection_target_2",
       done:"inspection_done_2",
     },
     {
-      name:"9月",
+      name:monthLabels[2],
       target:"inspection_target_3",
       done:"inspection_done_3",
     },
@@ -148,7 +152,7 @@ export default async function InspectionPage() {
               ?.filter(
                 d =>
                   d.store_id === store.id &&
-                  d.status === "提出"
+                  isSubmitted(d.status)
               )
               .sort(
                 (a,b)=>

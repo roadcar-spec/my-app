@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getDashboardData } from "./getDashboardData";
+import { getStatusDisplayKind } from "@/lib/managementStatus";
 import "./dashboard.css";
 
 
@@ -94,12 +95,14 @@ export default async function DashboardPage({
 
             <span
               className={
-                item.submitted
-                ? ""
+                getStatusDisplayKind(item.todayStatus) === "ontime"
+                ? "status-ontime"
+                : getStatusDisplayKind(item.todayStatus) === "late"
+                ? "status-late"
                 : "warning"
               }
             >
-              {item.submitted ? "提出" : "未提出"}
+              {item.todayStatus}
             </span>
 
 
@@ -205,16 +208,16 @@ export default async function DashboardPage({
 
         <div className="average">
 
-          平均　
-          7月：
+          平均
+          {data.inspection.monthLabels[0]}：
           {data.inspection.month1Average.toFixed(1)}%
 
-         　
-          8月：
+
+          {data.inspection.monthLabels[1]}：
           {data.inspection.month2Average.toFixed(1)}%
 
-         　
-          9月：
+
+          {data.inspection.monthLabels[2]}：
           {data.inspection.month3Average.toFixed(1)}%
 
         </div>
@@ -225,9 +228,9 @@ export default async function DashboardPage({
         <div className="grid grid-4 header">
 
           <span>店舗</span>
-          <span>7月</span>
-          <span>8月</span>
-          <span>9月</span>
+          <span>{data.inspection.monthLabels[0]}</span>
+          <span>{data.inspection.monthLabels[1]}</span>
+          <span>{data.inspection.monthLabels[2]}</span>
 
         </div>
 
