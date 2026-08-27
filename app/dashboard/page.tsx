@@ -149,9 +149,10 @@ export default async function DashboardPage({
 
 
 
-        <div className="grid grid-3 header">
+        <div className="grid grid-4 header">
 
           <span>店舗</span>
+          <span>本日実績</span>
           <span>実績</span>
           <span>達成率</span>
 
@@ -162,12 +163,17 @@ export default async function DashboardPage({
         {data.gross.stores.map(item => (
 
           <div
-            className="grid grid-3 row"
+            className="grid grid-4 row"
             key={item.store.id}
           >
 
             <span>
               {item.store.name}
+            </span>
+
+
+            <span>
+              {item.todayAmount.toLocaleString()}千円
             </span>
 
 

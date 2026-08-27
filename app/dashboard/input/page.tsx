@@ -39,6 +39,8 @@ export default function DashboardInputPage() {
 
       serviceGross:"",
 
+      serviceGrossToday:"",
+
       m1Done:"",
 
       m2Done:"",
@@ -130,6 +132,11 @@ export default function DashboardInputPage() {
             data.service_gross
           ),
 
+        serviceGrossToday:
+          String(
+            data.service_gross_today
+          ),
+
         m1Done:
           String(
             data.inspection_done_1
@@ -193,6 +200,12 @@ export default function DashboardInputPage() {
       service_gross:
         Number(
           form.serviceGross
+        ),
+
+
+      service_gross_today:
+        Number(
+          form.serviceGrossToday
         ),
 
 
@@ -380,23 +393,60 @@ export default function DashboardInputPage() {
           </h2>
 
 
-          <input
+          <div>
 
-            type="number"
+            <label>
+              本日実績
+            </label>
 
-            value={form.serviceGross}
 
-            onChange={
-              e=>
-                change(
-                  "serviceGross",
-                  e.target.value
-                )
-            }
+            <input
 
-            className="w-full border rounded-lg p-3"
+              type="number"
 
-          />
+              value={form.serviceGrossToday}
+
+              onChange={
+                e=>
+                  change(
+                    "serviceGrossToday",
+                    e.target.value
+                  )
+              }
+
+              className="w-full border rounded-lg p-3"
+
+            />
+
+          </div>
+
+
+          <div>
+
+            <label>
+              累計
+            </label>
+
+
+            <input
+
+              type="number"
+
+              value={form.serviceGross}
+
+              onChange={
+                e=>
+                  change(
+                    "serviceGross",
+                    e.target.value
+                  )
+              }
+
+              className="w-full border rounded-lg p-3"
+
+            />
+
+          </div>
 
 
         </div>

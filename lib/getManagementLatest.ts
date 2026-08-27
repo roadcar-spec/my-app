@@ -45,6 +45,10 @@ export async function getManagementLatest(
         today.service_gross ?? 0,
 
 
+      service_gross_today:
+        today.service_gross_today ?? 0,
+
+
       inspection_done_1:
         today.inspection_done_1 ?? 0,
 
@@ -106,6 +110,10 @@ export async function getManagementLatest(
 
     service_gross:
       latest?.service_gross ?? 0,
+
+
+    service_gross_today:
+      0,
 
 
     inspection_done_1:

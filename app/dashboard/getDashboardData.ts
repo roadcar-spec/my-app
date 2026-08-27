@@ -13,6 +13,7 @@ type Daily = {
   store_id: string;
   report_date: string;
   service_gross: number;
+  service_gross_today: number;
   inspection_done_1: number;
   inspection_done_2: number;
   inspection_done_3: number;
@@ -241,6 +242,14 @@ export async function getDashboardData(
         latest?.service_gross ?? 0;
 
 
+      const todayAmount =
+        dailyList.find(
+          d =>
+            d.store_id === store.id &&
+            d.report_date === date
+        )?.service_gross_today ?? 0;
+
+
       const target =
         targetList.find(
           t =>
@@ -253,6 +262,8 @@ export async function getDashboardData(
         store,
 
         amount,
+
+        todayAmount,
 
 
         rate:
