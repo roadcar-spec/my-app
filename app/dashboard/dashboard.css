@@ -150,6 +150,10 @@
   font-weight: 700;
 }
 
+.col-rate {
+  border-left: 1px solid #e5e7eb;
+}
+
 .status-ontime {
   color: #16a34a !important;
   font-weight: 700;

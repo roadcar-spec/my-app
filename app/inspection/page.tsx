@@ -317,24 +317,23 @@ export default async function InspectionPage() {
                   <span
                     className={
                       row.isCarryOver
-                      ? "warning"
+                      ? "carryover"
                       : ""
                     }
                   >
 
                     {row.done}台
 
-                    {/*
                     {
                       row.isCarryOver &&
+                      row.carryOverDate &&
                       (
                         <small>
                           <br />
-                          ※{row.carryOverDate}
+                          ※{row.carryOverDate.slice(5).replace("-", "/")}
                         </small>
                       )
                     }
-                   */}
                   </span>
 
 

@@ -67,6 +67,19 @@
 
 
 
+.carryover {
+  color: #888;
+  font-weight: normal;
+}
+
+
+.carryover small {
+  color: #aaa;
+  font-weight: normal;
+}
+
+
+
 @media(max-width:768px){
 
   .inspection {

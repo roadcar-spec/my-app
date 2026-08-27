@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getJstDateString, getRollingMonthLabels } from "./jstDate";
+import {
+  getJstDateString,
+  getJstMonthStartString,
+  getRollingMonthLabels,
+} from "./jstDate";
 
 describe("getJstDateString", () => {
   it("resolves UTC 2026-08-25T15:30Z to JST 2026-08-26 (just past JST midnight)", () => {
@@ -29,6 +33,25 @@ describe("getJstDateString", () => {
   it("defaults to the current instant when no date is passed", () => {
     const result = getJstDateString();
     expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe("getJstMonthStartString", () => {
+  it("returns the first day of the JST month for a given instant", () => {
+    // UTC 15:30 + 9h = JST 2026-08-26
+    const instant = new Date(Date.UTC(2026, 7, 25, 15, 30, 0));
+    expect(getJstMonthStartString(instant)).toBe("2026-08-01");
+  });
+
+  it("resolves near the JST month boundary using the JST date, not the UTC date", () => {
+    // UTC 2026-07-31T15:00Z + 9h = JST 2026-08-01
+    const instant = new Date(Date.UTC(2026, 6, 31, 15, 0, 0));
+    expect(getJstMonthStartString(instant)).toBe("2026-08-01");
+  });
+
+  it("defaults to the current instant when no date is passed", () => {
+    const result = getJstMonthStartString();
+    expect(result).toMatch(/^\d{4}-\d{2}-01$/);
   });
 });
 

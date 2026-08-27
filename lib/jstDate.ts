@@ -11,6 +11,12 @@ export function getJstDateString(date: Date = new Date()): string {
   return jstFormatter.format(date);
 }
 
+// 日本時間(Asia/Tokyo)における「今月1日」を "YYYY-MM-01" 形式で取得するヘルパー。
+// フォームの月初期値など、サーバーのタイムゾーンに関わらず正しい月を出したい箇所で使う。
+export function getJstMonthStartString(date: Date = new Date()): string {
+  return `${getJstDateString(date).substring(0, 7)}-01`;
+}
+
 // 車検進捗の月ラベル。基準月(monthStartDateStr、"YYYY-MM-DD" または "YYYY-MM")
 // から始まる3ヶ月分の "N月" ラベルを、年をまたいでも(12月→1月)正しく返す。
 export function getRollingMonthLabels(

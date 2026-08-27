@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { saveManagementTarget } from "@/lib/saveManagementTarget";
 import { sortStoresByDisplayOrder } from "@/lib/storeDisplayOrder";
+import { getJstMonthStartString } from "@/lib/jstDate";
 
 type Store = {
   id: string;
@@ -14,7 +15,7 @@ export default function TargetPage() {
   const [stores, setStores] = useState<Store[]>([]);
 
   const [form, setForm] = useState({
-    yearMonth: "2026-07-01",
+    yearMonth: getJstMonthStartString(),
     storeId: "",
     serviceTarget: "",
     inspectionTarget1: "",

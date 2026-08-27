@@ -75,8 +75,8 @@ export default async function DashboardPage({
         <div className="grid grid-3 header">
 
           <span>店舗</span>
-          <span>今日</span>
-          <span>提出率</span>
+          <span className="col-today">本日の状況</span>
+          <span className="col-rate">今月の提出率</span>
 
         </div>
 
@@ -95,11 +95,14 @@ export default async function DashboardPage({
 
             <span
               className={
-                getStatusDisplayKind(item.todayStatus) === "ontime"
-                ? "status-ontime"
-                : getStatusDisplayKind(item.todayStatus) === "late"
-                ? "status-late"
-                : "warning"
+                "col-today " +
+                (
+                  getStatusDisplayKind(item.todayStatus) === "ontime"
+                  ? "status-ontime"
+                  : getStatusDisplayKind(item.todayStatus) === "late"
+                  ? "status-late"
+                  : "warning"
+                )
               }
             >
               {item.todayStatus}
@@ -108,9 +111,12 @@ export default async function DashboardPage({
 
             <span
               className={
-                item.rate < data.submit.average
-                ? "warning"
-                : ""
+                "col-rate " +
+                (
+                  item.rate < data.submit.average
+                  ? "warning"
+                  : ""
+                )
               }
             >
               {item.rate.toFixed(1)}%
