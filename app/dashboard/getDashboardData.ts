@@ -9,11 +9,10 @@ type Store = {
   name: string;
 };
 
-type Daily = {
+export type Daily = {
   store_id: string;
   report_date: string;
   service_gross: number;
-  service_gross_today: number;
   inspection_done_1: number;
   inspection_done_2: number;
   inspection_done_3: number;
@@ -44,6 +43,50 @@ function getYesterday() {
   return date
     .toISOString()
     .split("T")[0];
+
+}
+
+
+
+// 当日の本日実績＝当日累計－同月内の直近提出日の累計（月をまたぐと基準がないため差分計算しない）
+export function getTodayGrossAmount(
+  dailyList:Daily[],
+  storeId:string,
+  date:string,
+  monthStart:string
+) {
+
+  const todayRow =
+    dailyList.find(
+      d =>
+        d.store_id === storeId &&
+        d.report_date === date
+    );
+
+  if (!todayRow) {
+    return 0;
+  }
+
+  const previousRow =
+    dailyList
+      .filter(
+        d =>
+          d.store_id === storeId &&
+          d.report_date < date &&
+          d.report_date >= monthStart &&
+          isSubmitted(d.status)
+      )
+      .sort(
+        (a,b)=>
+          b.report_date.localeCompare(
+            a.report_date
+          )
+      )[0];
+
+  return (
+    todayRow.service_gross -
+    (previousRow?.service_gross ?? 0)
+  );
 
 }
 
@@ -243,11 +286,12 @@ export async function getDashboardData(
 
 
       const todayAmount =
-        dailyList.find(
-          d =>
-            d.store_id === store.id &&
-            d.report_date === date
-        )?.service_gross_today ?? 0;
+        getTodayGrossAmount(
+          dailyList,
+          store.id,
+          date,
+          monthStart
+        );
 
 
       const target =

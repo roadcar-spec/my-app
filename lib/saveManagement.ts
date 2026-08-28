@@ -6,7 +6,6 @@ type ManagementData = {
   store_id: string;
 
   service_gross: number;
-  service_gross_today: number;
 
   inspection_done_1: number;
   inspection_done_2: number;
