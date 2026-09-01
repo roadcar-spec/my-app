@@ -59,11 +59,13 @@ function TargetGrid({
   stores,
   grid,
   onChange,
+  inputWidth = "w-16",
 }: {
   title: string;
   stores: Store[];
   grid: Grid;
   onChange: (storeId: string, month: number, value: string) => void;
+  inputWidth?: string;
 }) {
   return (
     <div className="bg-white rounded-xl shadow p-4 space-y-3">
@@ -105,7 +107,7 @@ function TargetGrid({
                       onChange={(e) =>
                         onChange(store.id, month, e.target.value)
                       }
-                      className="w-16 border rounded-lg p-1.5 text-right"
+                      className={`${inputWidth} border rounded-lg p-1.5 text-right`}
                     />
                   </td>
                 ))}
@@ -281,7 +283,7 @@ export default function TargetPage() {
   }
 
   return (
-    <main className="max-w-[1400px] mx-auto p-6 space-y-6">
+    <main className="max-w-[1600px] mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">月次目標入力</h1>
 
@@ -314,6 +316,7 @@ export default function TargetPage() {
         stores={stores}
         grid={grossGrid}
         onChange={changeGross}
+        inputWidth="w-24"
       />
 
       <TargetGrid
