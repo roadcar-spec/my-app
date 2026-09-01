@@ -1,7 +1,11 @@
 import { supabase } from "@/lib/supabase";
 import { getBusinessDaysInRange } from "@/lib/businessDay";
 import { isSubmitted } from "@/lib/managementStatus";
-import { getJstYesterdayString, getRollingMonthLabels } from "@/lib/jstDate";
+import {
+  getJstYesterdayString,
+  getRollingMonthLabels,
+  getRollingMonthStarts,
+} from "@/lib/jstDate";
 import { sortStoresByDisplayOrder } from "@/lib/storeDisplayOrder";
 
 type Store = {
@@ -22,9 +26,12 @@ export type Daily = {
 type Target = {
   store_id: string;
   service_target: number;
-  inspection_target_1: number;
-  inspection_target_2: number;
-  inspection_target_3: number;
+};
+
+type InspectionTarget = {
+  store_id: string;
+  target_month: string;
+  target_count: number;
 };
 
 
@@ -107,6 +114,12 @@ export async function getDashboardData(
     `${date.substring(0,8)}01`;
 
 
+  const [month1, month2, month3] =
+    getRollingMonthStarts(
+      monthStart
+    );
+
+
 
   const { data: stores } =
     await supabase
@@ -137,6 +150,17 @@ export async function getDashboardData(
 
 
 
+  const { data: inspectionTargets } =
+    await supabase
+      .from("inspection_monthly_target")
+      .select("*")
+      .in(
+        "target_month",
+        [month1, month2, month3]
+      );
+
+
+
   const storeList =
     sortStoresByDisplayOrder(
       (stores ?? []) as Store[]
@@ -150,6 +174,24 @@ export async function getDashboardData(
 
   const targetList =
     (targets ?? []) as Target[];
+
+
+  const inspectionTargetList =
+    (inspectionTargets ?? []) as InspectionTarget[];
+
+
+  function getInspectionTarget(
+    storeId:string,
+    targetMonth:string
+  ) {
+
+    return inspectionTargetList.find(
+      t =>
+        t.store_id === storeId &&
+        t.target_month === targetMonth
+    );
+
+  }
 
 
 
@@ -321,10 +363,24 @@ export async function getDashboardData(
         );
 
 
-      const target =
-        targetList.find(
-          t =>
-            t.store_id === store.id
+      const inspectionTarget1 =
+        getInspectionTarget(
+          store.id,
+          month1
+        );
+
+
+      const inspectionTarget2 =
+        getInspectionTarget(
+          store.id,
+          month2
+        );
+
+
+      const inspectionTarget3 =
+        getInspectionTarget(
+          store.id,
+          month3
         );
 
 
@@ -334,38 +390,38 @@ export async function getDashboardData(
 
 
         month1:
-          target?.inspection_target_1
-            ? 
+          inspectionTarget1?.target_count
+            ?
                 (latest?.inspection_done_1 ?? 0)
                 /
-                target.inspection_target_1
+                inspectionTarget1.target_count
                 *
                 100
-              
+
             : 0,
 
 
         month2:
-          target?.inspection_target_2
-            ? 
+          inspectionTarget2?.target_count
+            ?
                 (latest?.inspection_done_2 ?? 0)
                 /
-                target.inspection_target_2
+                inspectionTarget2.target_count
                 *
                 100
-              
+
             : 0,
 
 
         month3:
-          target?.inspection_target_3
-            ? 
+          inspectionTarget3?.target_count
+            ?
                 (latest?.inspection_done_3 ?? 0)
                 /
-                target.inspection_target_3
+                inspectionTarget3.target_count
                 *
                 100
-              
+
             : 0,
 
 

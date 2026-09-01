@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { isSubmitted } from "@/lib/managementStatus";
-import { getJstYesterdayString, getRollingMonthLabels } from "@/lib/jstDate";
+import {
+  getJstYesterdayString,
+  getRollingMonthLabels,
+  getRollingMonthStarts,
+} from "@/lib/jstDate";
 import { sortStoresByDisplayOrder } from "@/lib/storeDisplayOrder";
 import "./inspection.css";
 
@@ -51,6 +55,10 @@ export default async function InspectionPage() {
     `${viewDate.substring(0,8)}01`;
 
 
+  const [month1, month2, month3] =
+    getRollingMonthStarts(yearMonth);
+
+
 
   const { data: stores } =
     await supabase
@@ -59,13 +67,13 @@ export default async function InspectionPage() {
 
 
 
-  const { data: targets } =
+  const { data: inspectionTargets } =
     await supabase
-      .from("management_monthly_target")
+      .from("inspection_monthly_target")
       .select("*")
-      .eq(
-        "year_month",
-        yearMonth
+      .in(
+        "target_month",
+        [month1, month2, month3]
       );
 
 
@@ -95,17 +103,17 @@ export default async function InspectionPage() {
   const months = [
     {
       name:monthLabels[0],
-      target:"inspection_target_1",
+      targetMonth:month1,
       done:"inspection_done_1",
     },
     {
       name:monthLabels[1],
-      target:"inspection_target_2",
+      targetMonth:month2,
       done:"inspection_done_2",
     },
     {
       name:monthLabels[2],
-      target:"inspection_target_3",
+      targetMonth:month3,
       done:"inspection_done_3",
     },
   ];
@@ -121,9 +129,10 @@ export default async function InspectionPage() {
 
 
           const target =
-            targets?.find(
+            inspectionTargets?.find(
               t =>
-                t.store_id === store.id
+                t.store_id === store.id &&
+                t.target_month === month.targetMonth
             );
 
 
@@ -146,7 +155,7 @@ export default async function InspectionPage() {
 
           const targetValue =
             Number(
-              target?.[month.target] ?? 0
+              target?.target_count ?? 0
             );
 
 

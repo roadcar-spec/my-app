@@ -4,6 +4,7 @@ import {
   getJstMonthStartString,
   getJstYesterdayString,
   getRollingMonthLabels,
+  getRollingMonthStarts,
 } from "./jstDate";
 
 describe("getJstDateString", () => {
@@ -111,6 +112,40 @@ describe("getRollingMonthLabels", () => {
       "8月",
       "9月",
       "10月",
+    ]);
+  });
+});
+
+describe("getRollingMonthStarts", () => {
+  it("returns the base month plus the following two months as YYYY-MM-01 strings", () => {
+    expect(getRollingMonthStarts("2026-08-01")).toEqual([
+      "2026-08-01",
+      "2026-09-01",
+      "2026-10-01",
+    ]);
+  });
+
+  it("wraps from December into the next year for January and February", () => {
+    expect(getRollingMonthStarts("2026-12-01")).toEqual([
+      "2026-12-01",
+      "2027-01-01",
+      "2027-02-01",
+    ]);
+  });
+
+  it("wraps from November into the next year for January only", () => {
+    expect(getRollingMonthStarts("2026-11-01")).toEqual([
+      "2026-11-01",
+      "2026-12-01",
+      "2027-01-01",
+    ]);
+  });
+
+  it("accepts a YYYY-MM string without a day component", () => {
+    expect(getRollingMonthStarts("2026-08")).toEqual([
+      "2026-08-01",
+      "2026-09-01",
+      "2026-10-01",
     ]);
   });
 });

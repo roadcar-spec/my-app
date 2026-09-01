@@ -1,203 +1,292 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { saveManagementTarget } from "@/lib/saveManagementTarget";
+import {
+  saveServiceTargets,
+  saveInspectionTargets,
+} from "@/lib/saveManagementTarget";
 import { sortStoresByDisplayOrder } from "@/lib/storeDisplayOrder";
-import { getJstMonthStartString } from "@/lib/jstDate";
+import { getJstDateString } from "@/lib/jstDate";
 
 type Store = {
   id: string;
   name: string;
 };
 
+// 店舗ID → 月(1-12) → 入力値(文字列) のグリッド
+type Grid = Record<string, Record<number, string>>;
+
+const MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+function monthStart(year: number, month: number) {
+  return `${year}-${String(month).padStart(2, "0")}-01`;
+}
+
+function emptyGrid(stores: Store[]): Grid {
+  const grid: Grid = {};
+
+  for (const store of stores) {
+    grid[store.id] = {};
+
+    for (const month of MONTHS) {
+      grid[store.id][month] = "";
+    }
+  }
+
+  return grid;
+}
+
+function TargetGrid({
+  title,
+  stores,
+  grid,
+  onChange,
+}: {
+  title: string;
+  stores: Store[];
+  grid: Grid;
+  onChange: (storeId: string, month: number, value: string) => void;
+}) {
+  return (
+    <div className="bg-white rounded-xl shadow p-4 space-y-3">
+      <h2 className="font-bold text-lg">{title}</h2>
+
+      <div className="overflow-x-auto">
+        <table className="border-collapse text-sm">
+          <thead>
+            <tr>
+              <th className="sticky left-0 z-10 bg-white text-left p-2 border-b whitespace-nowrap">
+                店舗
+              </th>
+              {MONTHS.map((month) => (
+                <th
+                  key={month}
+                  className="p-2 border-b text-center whitespace-nowrap"
+                >
+                  {month}月
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody>
+            {stores.map((store) => (
+              <tr key={store.id}>
+                <td className="sticky left-0 z-10 bg-white font-semibold p-2 border-b whitespace-nowrap">
+                  {store.name}
+                </td>
+
+                {MONTHS.map((month) => (
+                  <td key={month} className="p-1 border-b">
+                    <input
+                      type="number"
+                      value={grid[store.id]?.[month] ?? ""}
+                      onChange={(e) =>
+                        onChange(store.id, month, e.target.value)
+                      }
+                      className="w-20 border rounded-lg p-1.5 text-right"
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export default function TargetPage() {
   const [stores, setStores] = useState<Store[]>([]);
 
-  const [form, setForm] = useState({
-    yearMonth: getJstMonthStartString(),
-    storeId: "",
-    serviceTarget: "",
-    inspectionTarget1: "",
-    inspectionTarget2: "",
-    inspectionTarget3: "",
-  });
+  const thisYear = Number(getJstDateString().substring(0, 4));
+  const yearOptions = [
+    thisYear - 1,
+    thisYear,
+    thisYear + 1,
+    thisYear + 2,
+  ];
+
+  const [year, setYear] = useState(thisYear);
+
+  const [grossGrid, setGrossGrid] = useState<Grid>({});
+  const [inspectionGrid, setInspectionGrid] = useState<Grid>({});
 
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  // 店舗一覧を読み込み、初期選択店舗を設定する
+  // 店舗一覧を読み込む
   useEffect(() => {
     const loadStores = async () => {
       const { data } = await supabase.from("master_store").select("*");
-
-      const sorted = sortStoresByDisplayOrder(data ?? []);
-
-      setStores(sorted);
-
-      if (sorted.length > 0) {
-        setForm((prev) => ({ ...prev, storeId: sorted[0].id }));
-      }
+      setStores(sortStoresByDisplayOrder(data ?? []));
     };
 
     loadStores();
   }, []);
 
-  // 月 or 拠点が変わったら既存データを読み込む
+  // 年、または店舗一覧が変わったら、その年の既存データを全店舗分まとめて読み込み、
+  // 入っている値をそのままグリッドに反映する
   useEffect(() => {
-    if (!form.storeId) return;
+    if (stores.length === 0) return;
 
     const loadExisting = async () => {
       setLoading(true);
 
-      const { data, error } = await supabase
-        .from("management_monthly_target")
-        .select("*")
-        .eq("year_month", form.yearMonth)
-        .eq("store_id", form.storeId)
-        .maybeSingle();
+      const rangeStart = monthStart(year, 1);
+      const rangeEnd = monthStart(year, 12);
 
-      if (error) {
-        console.error(error);
+      const [
+        { data: serviceRows, error: serviceError },
+        { data: inspectionRows, error: inspectionError },
+      ] = await Promise.all([
+        supabase
+          .from("management_monthly_target")
+          .select("*")
+          .gte("year_month", rangeStart)
+          .lte("year_month", rangeEnd),
+        supabase
+          .from("inspection_monthly_target")
+          .select("*")
+          .gte("target_month", rangeStart)
+          .lte("target_month", rangeEnd),
+      ]);
+
+      if (serviceError) console.error(serviceError);
+      if (inspectionError) console.error(inspectionError);
+
+      const nextGrossGrid = emptyGrid(stores);
+      const nextInspectionGrid = emptyGrid(stores);
+
+      for (const row of serviceRows ?? []) {
+        const month = Number(String(row.year_month).substring(5, 7));
+
+        if (nextGrossGrid[row.store_id]) {
+          nextGrossGrid[row.store_id][month] = String(
+            row.service_target ?? ""
+          );
+        }
       }
 
-      if (data) {
-        setForm((prev) => ({
-          ...prev,
-          serviceTarget: String(data.service_target ?? ""),
-          inspectionTarget1: String(data.inspection_target_1 ?? ""),
-          inspectionTarget2: String(data.inspection_target_2 ?? ""),
-          inspectionTarget3: String(data.inspection_target_3 ?? ""),
-        }));
-      } else {
-        // データがなければ空欄に戻す
-        setForm((prev) => ({
-          ...prev,
-          serviceTarget: "",
-          inspectionTarget1: "",
-          inspectionTarget2: "",
-          inspectionTarget3: "",
-        }));
+      for (const row of inspectionRows ?? []) {
+        const month = Number(String(row.target_month).substring(5, 7));
+
+        if (nextInspectionGrid[row.store_id]) {
+          nextInspectionGrid[row.store_id][month] = String(
+            row.target_count ?? ""
+          );
+        }
       }
+
+      setGrossGrid(nextGrossGrid);
+      setInspectionGrid(nextInspectionGrid);
 
       setLoading(false);
     };
 
     loadExisting();
-  }, [form.yearMonth, form.storeId]);
+  }, [year, stores]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-  };
+  function changeGross(storeId: string, month: number, value: string) {
+    setGrossGrid((prev) => ({
+      ...prev,
+      [storeId]: { ...prev[storeId], [month]: value },
+    }));
+  }
 
-  const save = async () => {
+  function changeInspection(storeId: string, month: number, value: string) {
+    setInspectionGrid((prev) => ({
+      ...prev,
+      [storeId]: { ...prev[storeId], [month]: value },
+    }));
+  }
+
+  async function save() {
+    setSaving(true);
+
     try {
-      await saveManagementTarget({
-        year_month: form.yearMonth,
-        store_id: form.storeId,
-        service_target: Number(form.serviceTarget),
-        inspection_target_1: Number(form.inspectionTarget1),
-        inspection_target_2: Number(form.inspectionTarget2),
-        inspection_target_3: Number(form.inspectionTarget3),
-      });
+      const serviceRows = stores.flatMap((store) =>
+        MONTHS.map((month) => ({
+          store_id: store.id,
+          year_month: monthStart(year, month),
+          service_target: Number(grossGrid[store.id]?.[month] || 0),
+        }))
+      );
+
+      const inspectionRows = stores.flatMap((store) =>
+        MONTHS.map((month) => ({
+          store_id: store.id,
+          target_month: monthStart(year, month),
+          target_count: Number(inspectionGrid[store.id]?.[month] || 0),
+        }))
+      );
+
+      await Promise.all([
+        saveServiceTargets(serviceRows),
+        saveInspectionTargets(inspectionRows),
+      ]);
 
       alert("保存しました");
     } catch (error) {
       console.error(error);
       alert("保存失敗");
+    } finally {
+      setSaving(false);
     }
-  };
+  }
 
   return (
-    <main className="max-w-xl mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold">月次目標入力</h1>
+    <main className="max-w-6xl mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">月次目標入力</h1>
 
-      {loading && <p className="text-sm text-gray-500">読み込み中...</p>}
-
-      <div>
-        <label className="font-semibold">対象月</label>
-        <input
-          type="date"
-          name="yearMonth"
-          value={form.yearMonth}
-          onChange={handleChange}
-          className="w-full border rounded-lg p-2 mt-1"
-        />
+        <Link href="/dashboard" className="text-blue-600 font-semibold">
+          ← 管理画面へ戻る
+        </Link>
       </div>
 
-      <div>
-        <label className="font-semibold">拠点</label>
+      <div className="flex items-center gap-3">
+        <label className="font-semibold">対象年</label>
         <select
-          name="storeId"
-          value={form.storeId}
-          onChange={handleChange}
-          className="w-full border rounded-lg p-2 mt-1"
+          value={year}
+          onChange={(e) => setYear(Number(e.target.value))}
+          className="border rounded-lg p-2"
         >
-          {stores.map((store) => (
-            <option key={store.id} value={store.id}>
-              {store.name}
+          {yearOptions.map((y) => (
+            <option key={y} value={y}>
+              {y}年
             </option>
           ))}
         </select>
+
+        {loading && (
+          <span className="text-sm text-gray-500">読み込み中...</span>
+        )}
       </div>
 
-      <div>
-        <label className="font-semibold">サービス粗利目標</label>
-        <input
-          type="number"
-          name="serviceTarget"
-          value={form.serviceTarget}
-          onChange={handleChange}
-          className="w-full border rounded-lg p-2 mt-1"
-        />
-      </div>
+      <TargetGrid
+        title="サービス粗利目標"
+        stores={stores}
+        grid={grossGrid}
+        onChange={changeGross}
+      />
 
-      <div className="border rounded-xl p-4 space-y-3">
-        <h2 className="font-bold text-lg">車検対象台数</h2>
-
-        <div>
-          <label>7月</label>
-          <input
-            type="number"
-            name="inspectionTarget1"
-            value={form.inspectionTarget1}
-            onChange={handleChange}
-            className="w-full border rounded-lg p-2 mt-1"
-          />
-        </div>
-
-        <div>
-          <label>8月</label>
-          <input
-            type="number"
-            name="inspectionTarget2"
-            value={form.inspectionTarget2}
-            onChange={handleChange}
-            className="w-full border rounded-lg p-2 mt-1"
-          />
-        </div>
-
-        <div>
-          <label>9月</label>
-          <input
-            type="number"
-            name="inspectionTarget3"
-            value={form.inspectionTarget3}
-            onChange={handleChange}
-            className="w-full border rounded-lg p-2 mt-1"
-          />
-        </div>
-      </div>
+      <TargetGrid
+        title="車検対象台数"
+        stores={stores}
+        grid={inspectionGrid}
+        onChange={changeInspection}
+      />
 
       <button
         onClick={save}
-        className="w-full bg-blue-600 text-white rounded-xl py-3 font-bold"
+        disabled={saving}
+        className="w-full bg-blue-600 text-white rounded-xl py-3 font-bold disabled:opacity-50"
       >
-        保存
+        {saving ? "保存中..." : "保存"}
       </button>
     </main>
   );
