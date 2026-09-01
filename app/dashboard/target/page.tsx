@@ -38,6 +38,22 @@ function emptyGrid(stores: Store[]): Grid {
   return grid;
 }
 
+function cellValue(grid: Grid, storeId: string, month: number) {
+  return Number(grid[storeId]?.[month] || 0);
+}
+
+function rowTotal(grid: Grid, storeId: string) {
+  return MONTHS.reduce((sum, month) => sum + cellValue(grid, storeId, month), 0);
+}
+
+function columnTotal(grid: Grid, stores: Store[], month: number) {
+  return stores.reduce((sum, store) => sum + cellValue(grid, store.id, month), 0);
+}
+
+function grandTotal(grid: Grid, stores: Store[]) {
+  return stores.reduce((sum, store) => sum + rowTotal(grid, store.id), 0);
+}
+
 function TargetGrid({
   title,
   stores,
@@ -68,6 +84,9 @@ function TargetGrid({
                   {month}月
                 </th>
               ))}
+              <th className="p-2 border-b text-center whitespace-nowrap bg-gray-50">
+                合計
+              </th>
             </tr>
           </thead>
 
@@ -86,12 +105,35 @@ function TargetGrid({
                       onChange={(e) =>
                         onChange(store.id, month, e.target.value)
                       }
-                      className="w-20 border rounded-lg p-1.5 text-right"
+                      className="w-16 border rounded-lg p-1.5 text-right"
                     />
                   </td>
                 ))}
+
+                <td className="p-2 border-b text-right font-semibold bg-gray-50 whitespace-nowrap">
+                  {rowTotal(grid, store.id).toLocaleString()}
+                </td>
               </tr>
             ))}
+
+            <tr>
+              <td className="sticky left-0 z-10 bg-gray-50 font-semibold p-2 whitespace-nowrap">
+                合計
+              </td>
+
+              {MONTHS.map((month) => (
+                <td
+                  key={month}
+                  className="p-2 text-right font-semibold bg-gray-50 whitespace-nowrap"
+                >
+                  {columnTotal(grid, stores, month).toLocaleString()}
+                </td>
+              ))}
+
+              <td className="p-2 text-right font-bold bg-gray-100 whitespace-nowrap">
+                {grandTotal(grid, stores).toLocaleString()}
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -239,7 +281,7 @@ export default function TargetPage() {
   }
 
   return (
-    <main className="max-w-6xl mx-auto p-6 space-y-6">
+    <main className="max-w-[1400px] mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">月次目標入力</h1>
 
