@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { isSubmitted } from "@/lib/managementStatus";
-import { getJstDateString, getRollingMonthLabels } from "@/lib/jstDate";
+import { getJstYesterdayString, getRollingMonthLabels } from "@/lib/jstDate";
 import { sortStoresByDisplayOrder } from "@/lib/storeDisplayOrder";
 import "./inspection.css";
 
@@ -44,7 +44,7 @@ export default async function InspectionPage() {
 
 
   const viewDate =
-    getJstDateString();
+    getJstYesterdayString();
 
 
   const yearMonth =

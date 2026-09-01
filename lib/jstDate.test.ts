@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getJstDateString,
   getJstMonthStartString,
+  getJstYesterdayString,
   getRollingMonthLabels,
 } from "./jstDate";
 
@@ -52,6 +53,31 @@ describe("getJstMonthStartString", () => {
   it("defaults to the current instant when no date is passed", () => {
     const result = getJstMonthStartString();
     expect(result).toMatch(/^\d{4}-\d{2}-01$/);
+  });
+});
+
+describe("getJstYesterdayString", () => {
+  it("resolves a normal same-month instant to the previous JST calendar day", () => {
+    // UTC 15:30 + 9h = JST 2026-08-26 => yesterday is 2026-08-25
+    const instant = new Date(Date.UTC(2026, 7, 25, 15, 30, 0));
+    expect(getJstYesterdayString(instant)).toBe("2026-08-25");
+  });
+
+  it("crosses a month boundary: JST 2026-09-01 yields 2026-08-31", () => {
+    // UTC 2026-08-31T15:00Z + 9h = JST 2026-09-01
+    const instant = new Date(Date.UTC(2026, 7, 31, 15, 0, 0));
+    expect(getJstYesterdayString(instant)).toBe("2026-08-31");
+  });
+
+  it("crosses a year boundary: JST 2027-01-01 yields 2026-12-31", () => {
+    // UTC 2026-12-31T15:00Z + 9h = JST 2027-01-01
+    const instant = new Date(Date.UTC(2026, 11, 31, 15, 0, 0));
+    expect(getJstYesterdayString(instant)).toBe("2026-12-31");
+  });
+
+  it("defaults to the current instant when no date is passed", () => {
+    const result = getJstYesterdayString();
+    expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });
 

@@ -11,6 +11,19 @@ export function getJstDateString(date: Date = new Date()): string {
   return jstFormatter.format(date);
 }
 
+// 日本時間(Asia/Tokyo)における「前日」を "YYYY-MM-DD" 形式で取得するヘルパー。
+// 「今日」はまだ終わっていないため、直近の確定した営業日(=前日)を既定値として
+// 使いたい箇所(ダッシュボード等)で使う。
+export function getJstYesterdayString(date: Date = new Date()): string {
+  const todayJst = getJstDateString(date);
+
+  const yesterday = new Date(`${todayJst}T00:00:00Z`);
+
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+
+  return yesterday.toISOString().split("T")[0];
+}
+
 // 日本時間(Asia/Tokyo)における「今月1日」を "YYYY-MM-01" 形式で取得するヘルパー。
 // フォームの月初期値など、サーバーのタイムゾーンに関わらず正しい月を出したい箇所で使う。
 export function getJstMonthStartString(date: Date = new Date()): string {

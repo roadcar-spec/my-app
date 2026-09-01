@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { getBusinessDaysInRange } from "@/lib/businessDay";
 import { isSubmitted } from "@/lib/managementStatus";
-import { getJstDateString, getRollingMonthLabels } from "@/lib/jstDate";
+import { getJstYesterdayString, getRollingMonthLabels } from "@/lib/jstDate";
 import { sortStoresByDisplayOrder } from "@/lib/storeDisplayOrder";
 
 type Store = {
@@ -26,26 +26,6 @@ type Target = {
   inspection_target_2: number;
   inspection_target_3: number;
 };
-
-
-function getYesterday() {
-
-  const todayJst = getJstDateString();
-
-  const date = new Date(
-    `${todayJst}T00:00:00Z`
-  );
-
-  date.setUTCDate(
-    date.getUTCDate() - 1
-  );
-
-  return date
-    .toISOString()
-    .split("T")[0];
-
-}
-
 
 
 // 当日の本日実績＝当日累計－同月内の直近提出日の累計（月をまたぐと基準がないため差分計算しない）
@@ -120,7 +100,7 @@ export async function getDashboardData(
 
   const date =
     viewDate ??
-    getYesterday();
+    getJstYesterdayString();
 
 
   const monthStart =
