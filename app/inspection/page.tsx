@@ -136,24 +136,31 @@ export default async function InspectionPage() {
     getRollingMonthLabels(yearMonth);
 
 
+  // prevTargetMonth: 先月同時点比較で参照する「先月時点でのこの列」の
+  // ターゲット月。ローリング窓が1ヶ月ずつ後ろにずれる関係上、month1は
+  // 文字通りprevMonthStart、month2は今月のmonth1、month3は今月のmonth2の
+  // ターゲット月と一致する。
   const months = [
     {
       name:monthLabels[0],
       targetMonth:month1,
       done:"inspection_done_1",
       isCurrentMonth:true,
+      prevTargetMonth:prevMonthStart,
     },
     {
       name:monthLabels[1],
       targetMonth:month2,
       done:"inspection_done_2",
       isCurrentMonth:false,
+      prevTargetMonth:month1,
     },
     {
       name:monthLabels[2],
       targetMonth:month3,
       done:"inspection_done_3",
       isCurrentMonth:false,
+      prevTargetMonth:month2,
     },
   ];
 
@@ -222,16 +229,19 @@ export default async function InspectionPage() {
 
 
 
-          // 先月同時点比較(営業日indexベース、当月列(month1)のみ対象)
+          // 先月同時点比較(営業日indexベース、全列対象)。month1は当月分として
+          // 前月側の下限をprevMonthStartに限定するが、month2/month3は月をまたいで
+          // 前倒し予約状況を追跡し続ける列のため、latestの取得と同様に前月側も
+          // 下限を設けず(comparisonDate以下で無制限に)検索する。
           let paceComparison: PaceComparison = null;
 
-          if (month.isCurrentMonth && comparisonDate) {
+          if (comparisonDate) {
 
             const prevTarget =
               inspectionTargets?.find(
                 t =>
                   t.store_id === store.id &&
-                  t.target_month === prevMonthStart
+                  t.target_month === month.prevTargetMonth
               );
 
             const prevTargetValue =
@@ -247,7 +257,10 @@ export default async function InspectionPage() {
                     d =>
                       d.store_id === store.id &&
                       isSubmitted(d.status) &&
-                      d.report_date >= prevMonthStart &&
+                      (
+                        !month.isCurrentMonth ||
+                        d.report_date >= prevMonthStart
+                      ) &&
                       d.report_date <= comparisonDate
                   )
                   .sort(
@@ -259,7 +272,7 @@ export default async function InspectionPage() {
 
               const previousDoneValue =
                 Number(
-                  previousLatest?.inspection_done_1 ?? 0
+                  previousLatest?.[month.done] ?? 0
                 );
 
               const previousRate =

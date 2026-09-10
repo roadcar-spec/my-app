@@ -314,6 +314,24 @@ export default async function DashboardPage({
               }
             >
               {item.month2.toFixed(1)}%
+
+              {item.month2PaceComparison && (
+                <small
+                  className={
+                    "pace-comparison " +
+                    (
+                      item.month2PaceComparison.deltaPoints >= 0
+                      ? "pace-up"
+                      : "pace-down"
+                    )
+                  }
+                >
+                  <br />
+                  (先月同時点比
+                  {item.month2PaceComparison.deltaPoints >= 0 ? " +" : " "}
+                  {item.month2PaceComparison.deltaPoints.toFixed(1)}pt)
+                </small>
+              )}
             </span>
 
             <span
@@ -324,6 +342,24 @@ export default async function DashboardPage({
               }
             >
               {item.month3.toFixed(1)}%
+
+              {item.month3PaceComparison && (
+                <small
+                  className={
+                    "pace-comparison " +
+                    (
+                      item.month3PaceComparison.deltaPoints >= 0
+                      ? "pace-up"
+                      : "pace-down"
+                    )
+                  }
+                >
+                  <br />
+                  (先月同時点比
+                  {item.month3PaceComparison.deltaPoints >= 0 ? " +" : " "}
+                  {item.month3PaceComparison.deltaPoints.toFixed(1)}pt)
+                </small>
+              )}
             </span>
 
           </div>

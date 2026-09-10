@@ -537,6 +537,83 @@ export async function getDashboardData(
           : null;
 
 
+      const month2Rate =
+        inspectionTarget2?.target_count
+          ?
+              (latest?.inspection_done_2 ?? 0)
+              /
+              inspectionTarget2.target_count
+              *
+              100
+
+          : 0;
+
+
+      const month3Rate =
+        inspectionTarget3?.target_count
+          ?
+              (latest?.inspection_done_3 ?? 0)
+              /
+              inspectionTarget3.target_count
+              *
+              100
+
+          : 0;
+
+
+      // 先月同時点比較(営業日indexベース、month2/month3共通)。month2/month3は
+      // 月をまたいで前倒し予約状況を追跡し続ける列のため、latestと同様に前月側の
+      // 直近提出データも下限を設けず(comparisonDate以下で無制限に)検索する。
+      const previousLatestUnbounded =
+        comparisonDate
+          ? getLatestSubmit(
+              store.id,
+              comparisonDate
+            )
+          : undefined;
+
+
+      // ローリング窓が1ヶ月ずつ後ろにずれる関係上、「先月のmonth2」の対象月は
+      // 「今月のmonth1」の対象月と一致するため、比較先のターゲットは
+      // inspectionTarget1(今月のmonth1ターゲット)を使う。
+      const previousMonth2Rate =
+        comparisonDate && inspectionTarget1?.target_count
+          ? (previousLatestUnbounded?.inspection_done_2 ?? 0) /
+              inspectionTarget1.target_count *
+              100
+          : null;
+
+
+      const month2PaceComparison: PaceComparison =
+        previousMonth2Rate !== null
+          ? {
+              rate: month2Rate,
+              previousRate: previousMonth2Rate,
+              deltaPoints: month2Rate - previousMonth2Rate,
+            }
+          : null;
+
+
+      // 「先月のmonth3」の対象月は「今月のmonth2」の対象月と一致するため、
+      // 比較先のターゲットはinspectionTarget2を使う。
+      const previousMonth3Rate =
+        comparisonDate && inspectionTarget2?.target_count
+          ? (previousLatestUnbounded?.inspection_done_3 ?? 0) /
+              inspectionTarget2.target_count *
+              100
+          : null;
+
+
+      const month3PaceComparison: PaceComparison =
+        previousMonth3Rate !== null
+          ? {
+              rate: month3Rate,
+              previousRate: previousMonth3Rate,
+              deltaPoints: month3Rate - previousMonth3Rate,
+            }
+          : null;
+
+
       return {
 
         store,
@@ -547,27 +624,11 @@ export async function getDashboardData(
 
 
         month2:
-          inspectionTarget2?.target_count
-            ?
-                (latest?.inspection_done_2 ?? 0)
-                /
-                inspectionTarget2.target_count
-                *
-                100
-
-            : 0,
+          month2Rate,
 
 
         month3:
-          inspectionTarget3?.target_count
-            ?
-                (latest?.inspection_done_3 ?? 0)
-                /
-                inspectionTarget3.target_count
-                *
-                100
-
-            : 0,
+          month3Rate,
 
 
         isCarryOver:
@@ -579,6 +640,10 @@ export async function getDashboardData(
 
 
         month1PaceComparison,
+
+        month2PaceComparison,
+
+        month3PaceComparison,
 
       };
 
