@@ -164,6 +164,12 @@
   font-weight: 700;
 }
 
+.pace-comparison-note {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
 .pace-comparison {
   display: block;
   margin-top: 2px;

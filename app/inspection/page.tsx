@@ -373,6 +373,10 @@ export default async function InspectionPage() {
           車検進捗詳細
         </h1>
 
+        <p className="pace-comparison-note">
+          （　）内は先月同時点比
+        </p>
+
 
       </header>
 
@@ -510,8 +514,8 @@ export default async function InspectionPage() {
                         }
                       >
                         <br />
-                        (先月同時点比
-                        {row.paceComparison.deltaPoints >= 0 ? " +" : " "}
+                        (
+                        {row.paceComparison.deltaPoints >= 0 ? "+" : ""}
                         {row.paceComparison.deltaPoints}pt)
                       </small>
                     )}

@@ -141,6 +141,9 @@ export default async function DashboardPage({
           サービス粗利
         </h2>
 
+        <p className="pace-comparison-note">
+          （　）内は先月同時点比
+        </p>
 
         <div className="average">
           平均達成率：
@@ -204,8 +207,8 @@ export default async function DashboardPage({
                   }
                 >
                   <br />
-                  (先月同時点比
-                  {item.paceComparison.deltaPoints >= 0 ? " +" : " "}
+                  (
+                  {item.paceComparison.deltaPoints >= 0 ? "+" : ""}
                   {item.paceComparison.deltaPoints.toFixed(1)}pt)
                 </small>
               )}
@@ -235,6 +238,10 @@ export default async function DashboardPage({
             車検詳細を見る →
           </Link>
         </div>
+
+        <p className="pace-comparison-note">
+          （　）内は先月同時点比
+        </p>
 
         <div className="average">
 
@@ -299,8 +306,8 @@ export default async function DashboardPage({
                   }
                 >
                   <br />
-                  (先月同時点比
-                  {item.month1PaceComparison.deltaPoints >= 0 ? " +" : " "}
+                  (
+                  {item.month1PaceComparison.deltaPoints >= 0 ? "+" : ""}
                   {item.month1PaceComparison.deltaPoints.toFixed(1)}pt)
                 </small>
               )}
@@ -327,8 +334,8 @@ export default async function DashboardPage({
                   }
                 >
                   <br />
-                  (先月同時点比
-                  {item.month2PaceComparison.deltaPoints >= 0 ? " +" : " "}
+                  (
+                  {item.month2PaceComparison.deltaPoints >= 0 ? "+" : ""}
                   {item.month2PaceComparison.deltaPoints.toFixed(1)}pt)
                 </small>
               )}
@@ -355,8 +362,8 @@ export default async function DashboardPage({
                   }
                 >
                   <br />
-                  (先月同時点比
-                  {item.month3PaceComparison.deltaPoints >= 0 ? " +" : " "}
+                  (
+                  {item.month3PaceComparison.deltaPoints >= 0 ? "+" : ""}
                   {item.month3PaceComparison.deltaPoints.toFixed(1)}pt)
                 </small>
               )}
