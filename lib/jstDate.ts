@@ -30,6 +30,22 @@ export function getJstMonthStartString(date: Date = new Date()): string {
   return `${getJstDateString(date).substring(0, 7)}-01`;
 }
 
+// 基準の月初日("YYYY-MM-01")から、前月の月初日と月末日を "YYYY-MM-DD" 形式で
+// 返すヘルパー。月末日は「基準の月初日の前日」として計算する(=単純なUTC日付演算)。
+// 先月同時点比較(営業日indexベースのペース比較)などで使う。
+export function getPreviousMonthRange(
+  monthStartDateStr: string
+): { prevMonthStart: string; prevMonthEnd: string } {
+  const prevMonthEndDate = new Date(`${monthStartDateStr}T00:00:00Z`);
+
+  prevMonthEndDate.setUTCDate(prevMonthEndDate.getUTCDate() - 1);
+
+  const prevMonthEnd = prevMonthEndDate.toISOString().split("T")[0];
+  const prevMonthStart = `${prevMonthEnd.substring(0, 7)}-01`;
+
+  return { prevMonthStart, prevMonthEnd };
+}
+
 // 車検進捗の対象3ヶ月(基準月＋続く2ヶ月)を、年をまたいでも(12月→1月)
 // 正しく計算する内部ヘルパー。基準月(monthStartDateStr、"YYYY-MM-DD" または
 // "YYYY-MM")から { year, month } を3ヶ月分返す。

@@ -79,6 +79,23 @@
 }
 
 
+.pace-comparison {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: normal;
+  color: #888;
+}
+
+.pace-comparison.pace-up {
+  color: #16a34a;
+}
+
+.pace-comparison.pace-down {
+  color: #dc2626;
+}
+
+
 
 @media(max-width:768px){
 

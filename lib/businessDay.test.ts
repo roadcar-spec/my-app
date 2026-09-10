@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getBusinessDaysInRange, isBusinessDay } from "./businessDay";
+import {
+  getBusinessDayIndex,
+  getBusinessDaysInRange,
+  getDateAtBusinessDayIndex,
+  isBusinessDay,
+} from "./businessDay";
 
 describe("isBusinessDay", () => {
   it("treats a normal Monday as a business day", () => {
@@ -53,5 +58,47 @@ describe("getBusinessDaysInRange", () => {
     // 2026-04-01 (Wed, not a holiday/month-end exception, closed)
     const result = getBusinessDaysInRange("2026-03-30", "2026-04-01");
     expect(result).toEqual(["2026-03-30", "2026-03-31"]);
+  });
+});
+
+describe("getBusinessDayIndex", () => {
+  it("counts the business days elapsed up to and including the given date (normal case)", () => {
+    // 2026-08-24 (Mon), 2026-08-25 (Tue, closed), 2026-08-26 (Wed, closed),
+    // 2026-08-27 (Thu) => 2 business days by 2026-08-27
+    expect(getBusinessDayIndex("2026-08-24", "2026-08-27")).toBe(2);
+  });
+
+  it("composes with the last-day-of-month exception instead of reimplementing it", () => {
+    // 2026-03-30 (Mon, business), 2026-03-31 (Tue, last-day-of-month exception, business)
+    expect(getBusinessDayIndex("2026-03-30", "2026-03-31")).toBe(2);
+  });
+});
+
+describe("getDateAtBusinessDayIndex", () => {
+  it("finds the date at a given 1-indexed business-day index within a range (normal case)", () => {
+    // 2026-08-24 (Mon, 1st business day), 2026-08-27 (Thu, 2nd business day)
+    expect(
+      getDateAtBusinessDayIndex("2026-08-24", "2026-08-31", 2)
+    ).toBe("2026-08-27");
+  });
+
+  it("returns undefined when the range does not have that many business days", () => {
+    // 2026-03-30..2026-04-01 only has 2 business days (see getBusinessDaysInRange test above)
+    expect(
+      getDateAtBusinessDayIndex("2026-03-30", "2026-04-01", 5)
+    ).toBeUndefined();
+  });
+
+  it("composes with the public-holiday exception instead of reimplementing it", () => {
+    // 2026-02-11 is a Wednesday public holiday (business-day exception, see isBusinessDay tests)
+    const businessDaysUpToHoliday = getBusinessDaysInRange(
+      "2026-02-01",
+      "2026-02-11"
+    );
+    const index = businessDaysUpToHoliday.length;
+
+    expect(
+      getDateAtBusinessDayIndex("2026-02-01", "2026-02-28", index)
+    ).toBe("2026-02-11");
   });
 });

@@ -2,12 +2,25 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { isSubmitted } from "@/lib/managementStatus";
 import {
+  getBusinessDayIndex,
+  getDateAtBusinessDayIndex,
+} from "@/lib/businessDay";
+import {
   getJstYesterdayString,
+  getPreviousMonthRange,
   getRollingMonthLabels,
   getRollingMonthStarts,
 } from "@/lib/jstDate";
 import { sortStoresByDisplayOrder } from "@/lib/storeDisplayOrder";
 import "./inspection.css";
+
+// 「先月同時点比」(営業日indexベースのペース比較)。比較対象が存在しない場合
+// (先月に対応する営業日が無い/先月の目標が未設定 等)はnullで「比較なし」を表す。
+type PaceComparison = {
+  rate: number;
+  previousRate: number;
+  deltaPoints: number;
+} | null;
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +72,29 @@ export default async function InspectionPage() {
     getRollingMonthStarts(yearMonth);
 
 
+  // 先月同時点比較(営業日indexベース)のための基準値。当月の1列目(month1)
+  // にのみ使う。
+  const { prevMonthStart, prevMonthEnd } =
+    getPreviousMonthRange(yearMonth);
+
+
+  const businessDayIndex =
+    getBusinessDayIndex(
+      yearMonth,
+      viewDate
+    );
+
+
+  // 「今月の営業日N日目」に対応する先月の日付。先月の営業日数がN日に
+  // 満たない場合はundefined(＝比較対象なし)。
+  const comparisonDate =
+    getDateAtBusinessDayIndex(
+      prevMonthStart,
+      prevMonthEnd,
+      businessDayIndex
+    );
+
+
 
   const { data: stores } =
     await supabase
@@ -73,7 +109,7 @@ export default async function InspectionPage() {
       .select("*")
       .in(
         "target_month",
-        [month1, month2, month3]
+        [month1, month2, month3, prevMonthStart]
       );
 
 
@@ -105,16 +141,19 @@ export default async function InspectionPage() {
       name:monthLabels[0],
       targetMonth:month1,
       done:"inspection_done_1",
+      isCurrentMonth:true,
     },
     {
       name:monthLabels[1],
       targetMonth:month2,
       done:"inspection_done_2",
+      isCurrentMonth:false,
     },
     {
       name:monthLabels[2],
       targetMonth:month3,
       done:"inspection_done_3",
+      isCurrentMonth:false,
     },
   ];
 
@@ -137,12 +176,20 @@ export default async function InspectionPage() {
 
 
 
+          // 当月列(month1)は、今月に入ってまだ誰も提出していない場合に
+          // 前月末の累計を「繰り越し」として拾ってしまわないよう当月内に
+          // 限定する。先々月分の前倒し予約状況(month2/month3)は従来通り
+          // 無制限で直近提出データを見る(挙動を変えない)。
           const latest =
             daily
               ?.filter(
                 d =>
                   d.store_id === store.id &&
-                  isSubmitted(d.status)
+                  isSubmitted(d.status) &&
+                  (
+                    !month.isCurrentMonth ||
+                    d.report_date >= yearMonth
+                  )
               )
               .sort(
                 (a,b)=>
@@ -167,6 +214,72 @@ export default async function InspectionPage() {
 
 
 
+          const rate =
+            calcRate(
+              doneValue,
+              targetValue
+            );
+
+
+
+          // 先月同時点比較(営業日indexベース、当月列(month1)のみ対象)
+          let paceComparison: PaceComparison = null;
+
+          if (month.isCurrentMonth && comparisonDate) {
+
+            const prevTarget =
+              inspectionTargets?.find(
+                t =>
+                  t.store_id === store.id &&
+                  t.target_month === prevMonthStart
+              );
+
+            const prevTargetValue =
+              Number(
+                prevTarget?.target_count ?? 0
+              );
+
+            if (prevTargetValue) {
+
+              const previousLatest =
+                daily
+                  ?.filter(
+                    d =>
+                      d.store_id === store.id &&
+                      isSubmitted(d.status) &&
+                      d.report_date >= prevMonthStart &&
+                      d.report_date <= comparisonDate
+                  )
+                  .sort(
+                    (a,b)=>
+                      b.report_date.localeCompare(
+                        a.report_date
+                      )
+                  )[0];
+
+              const previousDoneValue =
+                Number(
+                  previousLatest?.inspection_done_1 ?? 0
+                );
+
+              const previousRate =
+                calcRate(
+                  previousDoneValue,
+                  prevTargetValue
+                );
+
+              paceComparison = {
+                rate,
+                previousRate,
+                deltaPoints: rate - previousRate,
+              };
+
+            }
+
+          }
+
+
+
           return {
 
             store,
@@ -184,11 +297,7 @@ export default async function InspectionPage() {
               targetValue - doneValue,
 
 
-            rate:
-              calcRate(
-                doneValue,
-                targetValue
-              ),
+            rate,
 
 
             isCarryOver:
@@ -197,6 +306,9 @@ export default async function InspectionPage() {
 
             carryOverDate:
               latest?.report_date ?? "",
+
+
+            paceComparison,
 
           };
 
@@ -372,6 +484,24 @@ export default async function InspectionPage() {
                   >
 
                     {row.rate}%
+
+                    {row.paceComparison && (
+                      <small
+                        className={
+                          "pace-comparison " +
+                          (
+                            row.paceComparison.deltaPoints >= 0
+                            ? "pace-up"
+                            : "pace-down"
+                          )
+                        }
+                      >
+                        <br />
+                        (先月同時点比
+                        {row.paceComparison.deltaPoints >= 0 ? " +" : " "}
+                        {row.paceComparison.deltaPoints}pt)
+                      </small>
+                    )}
 
                   </span>
 

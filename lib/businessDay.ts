@@ -74,3 +74,30 @@ export function getBusinessDaysInRange(
 
   return result;
 }
+
+// [monthStartDateStr, dateStr] の範囲に含まれる営業日が何日目か(1始まり)を返す。
+// dateStr 自体が営業日でなくても、そこまでに経過した営業日数をそのまま返す
+// (＝getBusinessDaysInRange の件数の薄いラッパー)。
+export function getBusinessDayIndex(
+  monthStartDateStr: string,
+  dateStr: string
+): number {
+  return getBusinessDaysInRange(monthStartDateStr, dateStr).length;
+}
+
+// [monthStartDateStr, monthEndDateStr] の範囲内で、営業日index番目(1始まり、
+// getBusinessDayIndex の戻り値と対応)に当たる日付を返す。その範囲に営業日が
+// index件に満たない場合(例:前月の営業日数が今月より少ない)はundefinedを返す。
+// 「先月に対応する時点が存在しない」ケースは呼び出し側で許容すべき正常系。
+export function getDateAtBusinessDayIndex(
+  monthStartDateStr: string,
+  monthEndDateStr: string,
+  index: number
+): string | undefined {
+  const result = getBusinessDaysInRange(
+    monthStartDateStr,
+    monthEndDateStr
+  );
+
+  return result[index - 1];
+}
