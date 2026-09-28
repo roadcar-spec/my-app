@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import {
   getBusinessDayIndex,
   getBusinessDaysInRange,
-  getDateAtBusinessDayIndex,
+  getClampedDateAtBusinessDayIndex,
 } from "@/lib/businessDay";
 import { isSubmitted } from "@/lib/managementStatus";
 import {
@@ -149,9 +149,11 @@ export async function getDashboardData(
 
 
   // 「今月の営業日N日目」に対応する先月の日付。先月の営業日数がN日に
-  // 満たない場合はundefined(＝比較対象なし、呼び出し側でnull扱いする)。
+  // 満たない場合は先月最後の営業日にクランプする(例:お盆等の特別休業で
+  // 先月が短縮された場合でも月末まで比較を出し続ける)。先月に営業日が
+  // 1件も無い場合のみundefined(＝比較対象なし、呼び出し側でnull扱いする)。
   const comparisonDate =
-    getDateAtBusinessDayIndex(
+    getClampedDateAtBusinessDayIndex(
       prevMonthStart,
       prevMonthEnd,
       businessDayIndex

@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { isSubmitted } from "@/lib/managementStatus";
 import {
   getBusinessDayIndex,
-  getDateAtBusinessDayIndex,
+  getClampedDateAtBusinessDayIndex,
 } from "@/lib/businessDay";
 import {
   getJstYesterdayString,
@@ -86,9 +86,11 @@ export default async function InspectionPage() {
 
 
   // 「今月の営業日N日目」に対応する先月の日付。先月の営業日数がN日に
-  // 満たない場合はundefined(＝比較対象なし)。
+  // 満たない場合は先月最後の営業日にクランプする(例:お盆等の特別休業で
+  // 先月が短縮された場合でも月末まで比較を出し続ける)。先月に営業日が
+  // 1件も無い場合のみundefined(＝比較対象なし)。
   const comparisonDate =
-    getDateAtBusinessDayIndex(
+    getClampedDateAtBusinessDayIndex(
       prevMonthStart,
       prevMonthEnd,
       businessDayIndex

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getBusinessDayIndex,
   getBusinessDaysInRange,
+  getClampedDateAtBusinessDayIndex,
   getDateAtBusinessDayIndex,
   isBusinessDay,
 } from "./businessDay";
@@ -100,5 +101,54 @@ describe("getDateAtBusinessDayIndex", () => {
     expect(
       getDateAtBusinessDayIndex("2026-02-01", "2026-02-28", index)
     ).toBe("2026-02-11");
+  });
+});
+
+describe("getClampedDateAtBusinessDayIndex", () => {
+  it("clamps to the last business day in range when the range has fewer business days than the requested index (real-world case: August 2026 shortened by the お盆 special-holiday closure)", () => {
+    // As of 2026-09-27, September has 21 elapsed business days, but August
+    // 2026 (2026-08-01..2026-08-31) only has 20 business days in total because
+    // of the お盆 special-holiday closure (2026-08-12..2026-08-16). Confirm
+    // August's actual last business day rather than assuming it, then confirm
+    // the clamped function lands on it for an out-of-range index.
+    const augustBusinessDays = getBusinessDaysInRange(
+      "2026-08-01",
+      "2026-08-31"
+    );
+    expect(augustBusinessDays.length).toBe(20);
+    expect(augustBusinessDays[augustBusinessDays.length - 1]).toBe(
+      "2026-08-31"
+    );
+
+    expect(
+      getClampedDateAtBusinessDayIndex("2026-08-01", "2026-08-31", 21)
+    ).toBe("2026-08-31");
+  });
+
+  it("agrees with getDateAtBusinessDayIndex when the index is within range (normal case)", () => {
+    // Same case as the getDateAtBusinessDayIndex normal-case test above:
+    // 2026-08-24 (Mon, 1st business day), 2026-08-27 (Thu, 2nd business day)
+    const expected = getDateAtBusinessDayIndex(
+      "2026-08-24",
+      "2026-08-31",
+      2
+    );
+    expect(expected).toBe("2026-08-27");
+
+    expect(
+      getClampedDateAtBusinessDayIndex("2026-08-24", "2026-08-31", 2)
+    ).toBe(expected);
+  });
+
+  it("returns undefined when the range has zero business days at all", () => {
+    // 2026-08-12..2026-08-16 falls entirely inside the お盆 special-holiday
+    // range, so it has zero business days regardless of weekday.
+    expect(
+      getBusinessDaysInRange("2026-08-12", "2026-08-16")
+    ).toEqual([]);
+
+    expect(
+      getClampedDateAtBusinessDayIndex("2026-08-12", "2026-08-16", 1)
+    ).toBeUndefined();
   });
 });

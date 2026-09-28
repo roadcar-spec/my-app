@@ -101,3 +101,27 @@ export function getDateAtBusinessDayIndex(
 
   return result[index - 1];
 }
+
+// getDateAtBusinessDayIndex と同様に [monthStartDateStr, monthEndDateStr] の
+// 範囲内で営業日index番目(1始まり)に当たる日付を返すが、その範囲の営業日数が
+// index件に満たない場合は undefined ではなく、範囲内の「最後の営業日」を返す。
+// (例:前月がお盆等の特別休業で短縮され、今月の経過営業日数が前月の総営業日数
+// を超えた場合でも、月末まで前月末の営業日を基準にした比較を出し続けるための
+// フォールバック用途)
+// 範囲内に営業日が1件も無い場合のみ undefined を返す。
+export function getClampedDateAtBusinessDayIndex(
+  monthStartDateStr: string,
+  monthEndDateStr: string,
+  index: number
+): string | undefined {
+  const result = getBusinessDaysInRange(
+    monthStartDateStr,
+    monthEndDateStr
+  );
+
+  if (result.length === 0) {
+    return undefined;
+  }
+
+  return result[Math.min(index, result.length) - 1];
+}
