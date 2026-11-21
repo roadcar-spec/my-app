@@ -1,9 +1,12 @@
 import { supabase } from "@/lib/supabase";
 import {
   getBusinessDayIndex,
-  getBusinessDaysInRange,
   getClampedDateAtBusinessDayIndex,
 } from "@/lib/businessDay";
+import {
+  getReportPeriod,
+  getRequiredReportDates,
+} from "@/lib/reportPeriod";
 import { isSubmitted } from "@/lib/managementStatus";
 import {
   getJstYesterdayString,
@@ -50,6 +53,8 @@ export type PaceComparison = {
 
 
 // 当日の本日実績＝当日累計－同月内の直近提出日の累計（月をまたぐと基準がないため差分計算しない）
+// monthStart には対象月の行の下限(lib/reportPeriod.ts の periodStart=対象月2日)を渡す。
+// 当月1日の行は前月の最終なので、2日の本日実績は2日の累計そのものになる。
 export function getTodayGrossAmount(
   dailyList:Daily[],
   storeId:string,
@@ -124,8 +129,16 @@ export async function getDashboardData(
     getJstYesterdayString();
 
 
+  // 対象月は「M月2日〜翌月1日」(毎月1日の日報は前月の最終。lib/reportPeriod.ts)。
+  // 表示日が1日なら、前月の画面(最終の数字)になる。
+  const period =
+    getReportPeriod(
+      date
+    );
+
+
   const monthStart =
-    `${date.substring(0,8)}01`;
+    period.monthStart;
 
 
   const [month1, month2, month3] =
@@ -144,7 +157,7 @@ export async function getDashboardData(
   const businessDayIndex =
     getBusinessDayIndex(
       monthStart,
-      date
+      period.businessAsOf
     );
 
 
@@ -158,6 +171,20 @@ export async function getDashboardData(
       prevMonthEnd,
       businessDayIndex
     );
+
+
+  // 先月側で行を拾う範囲(先月2日〜)。表示日が締め(翌月1日)なら、先月も
+  // 締めの日報(=今月1日の行)と比べる。
+  const prevPeriodStart =
+    getReportPeriod(
+      prevMonthEnd
+    ).periodStart;
+
+
+  const previousAsOf =
+    comparisonDate && period.isClosingDay
+      ? monthStart
+      : comparisonDate;
 
 
 
@@ -264,9 +291,11 @@ export async function getDashboardData(
 
 
 
+  // 日報が出ているべき日: 対象月2日〜表示日の営業日(締めの日は翌月1日も)。
+  // 当月1日の行は前月の最終なので、当月の提出日数には入れない。
   const businessDaysInMonth =
-    getBusinessDaysInRange(
-      monthStart,
+    getRequiredReportDates(
+      period,
       date
     );
 
@@ -350,7 +379,7 @@ export async function getDashboardData(
         getLatestSubmit(
           store.id,
           date,
-          monthStart
+          period.periodStart
         );
 
 
@@ -363,7 +392,7 @@ export async function getDashboardData(
           dailyList,
           store.id,
           date,
-          monthStart
+          period.periodStart
         );
 
 
@@ -393,11 +422,11 @@ export async function getDashboardData(
 
 
       const previousLatest =
-        comparisonDate
+        previousAsOf
           ? getLatestSubmit(
               store.id,
-              comparisonDate,
-              prevMonthStart
+              previousAsOf,
+              prevPeriodStart
             )
           : undefined;
 
@@ -466,7 +495,7 @@ export async function getDashboardData(
         getLatestSubmit(
           store.id,
           date,
-          monthStart
+          period.periodStart
         );
 
 
@@ -512,11 +541,11 @@ export async function getDashboardData(
 
 
       const previousLatestMonth1 =
-        comparisonDate
+        previousAsOf
           ? getLatestSubmit(
               store.id,
-              comparisonDate,
-              prevMonthStart
+              previousAsOf,
+              prevPeriodStart
             )
           : undefined;
 
@@ -567,10 +596,10 @@ export async function getDashboardData(
       // 月をまたいで前倒し予約状況を追跡し続ける列のため、latestと同様に前月側の
       // 直近提出データも下限を設けず(comparisonDate以下で無制限に)検索する。
       const previousLatestUnbounded =
-        comparisonDate
+        previousAsOf
           ? getLatestSubmit(
               store.id,
-              comparisonDate
+              previousAsOf
             )
           : undefined;
 

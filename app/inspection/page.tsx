@@ -12,6 +12,7 @@ import {
   getRollingMonthStarts,
 } from "@/lib/jstDate";
 import { sortStoresByDisplayOrder } from "@/lib/storeDisplayOrder";
+import { getReportPeriod } from "@/lib/reportPeriod";
 import "./inspection.css";
 
 // 「先月同時点比」(営業日indexベースのペース比較)。比較対象が存在しない場合
@@ -64,8 +65,14 @@ export default async function InspectionPage() {
     getJstYesterdayString();
 
 
+  // 対象月は「M月2日〜翌月1日」(毎月1日の日報は前月の最終。lib/reportPeriod.ts)。
+  // 表示日が1日なら、前月の画面(最終の数字)になる。
+  const period =
+    getReportPeriod(viewDate);
+
+
   const yearMonth =
-    `${viewDate.substring(0,8)}01`;
+    period.monthStart;
 
 
   const [month1, month2, month3] =
@@ -81,7 +88,7 @@ export default async function InspectionPage() {
   const businessDayIndex =
     getBusinessDayIndex(
       yearMonth,
-      viewDate
+      period.businessAsOf
     );
 
 
@@ -95,6 +102,18 @@ export default async function InspectionPage() {
       prevMonthEnd,
       businessDayIndex
     );
+
+
+  // 先月側で行を拾う範囲(先月2日〜)。表示日が締め(翌月1日)なら、先月も
+  // 締めの日報(=今月1日の行)と比べる。
+  const prevPeriodStart =
+    getReportPeriod(prevMonthEnd).periodStart;
+
+
+  const previousAsOf =
+    comparisonDate && period.isClosingDay
+      ? yearMonth
+      : comparisonDate;
 
 
 
@@ -197,7 +216,7 @@ export default async function InspectionPage() {
                   isSubmitted(d.status) &&
                   (
                     !month.isCurrentMonth ||
-                    d.report_date >= yearMonth
+                    d.report_date >= period.periodStart
                   )
               )
               .sort(
@@ -237,7 +256,7 @@ export default async function InspectionPage() {
           // 下限を設けず(comparisonDate以下で無制限に)検索する。
           let paceComparison: PaceComparison = null;
 
-          if (comparisonDate) {
+          if (previousAsOf) {
 
             const prevTarget =
               inspectionTargets?.find(
@@ -261,9 +280,9 @@ export default async function InspectionPage() {
                       isSubmitted(d.status) &&
                       (
                         !month.isCurrentMonth ||
-                        d.report_date >= prevMonthStart
+                        d.report_date >= prevPeriodStart
                       ) &&
-                      d.report_date <= comparisonDate
+                      d.report_date <= previousAsOf
                   )
                   .sort(
                     (a,b)=>
